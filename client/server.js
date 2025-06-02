@@ -73,7 +73,7 @@ app.post(
     try {
       console.log('⏳ Calling Hugging Face...');
       const hfRes = await fetch(
-        'https://api-inference.huggingface.co/models/facebook/bart-large-cnn',
+        'https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6',
         {
           method: 'POST',
           headers: {
