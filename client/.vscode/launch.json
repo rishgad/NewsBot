@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Launch Server (Node)",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/server/index.js",
+        "cwd": "${workspaceFolder}/server",
+        "console": "integratedTerminal",
+        "restart": true,
+        "runtimeExecutable": "nodemon"
+      },
+      {
+        "name": "Launch Client (Chrome)",
+        "type": "pwa-chrome",
+        "request": "launch",
+        "url": "http://localhost:5001",
+        "webRoot": "${workspaceFolder}/client/src"
+      },
+      {
+        "name": "Run Both",
+        "compounds": [
+          "Launch Server (Node)",
+          "Launch Client (Chrome)"
+        ]
+      }
+    ]
+  }
+
