@@ -1,5 +1,6 @@
 export default async function handler(req, res) {
     const apiKey = process.env.NEWS_API_KEY;
+  
     if (!apiKey) {
       return res.status(500).json({ error: 'Missing NEWS_API_KEY' });
     }
@@ -9,9 +10,15 @@ export default async function handler(req, res) {
     try {
       const newsRes = await fetch(url);
       const data = await newsRes.json();
+  
+      // Check if NewsAPI returned an error
+      if (data.status !== 'ok') {
+        throw new Error(data.message || 'NewsAPI error');
+      }
+  
       res.status(200).json(data);
     } catch (err) {
-      console.error('API fetch error:', err);
+      console.error('❌ API fetch error:', err);
       res.status(500).json({ error: 'Failed to fetch news' });
     }
   }

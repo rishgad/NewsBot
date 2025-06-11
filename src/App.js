@@ -121,15 +121,15 @@ export default function App() {
   const list = reviewMode ? draftArticles : articles;
 
   const handleSaveDesc = () => {
-    setDraftArticles((prev) =>
+    setArticles((prev) =>
       prev.map((art) =>
-        art.url === activeArticle.url ? { ...art, desc: editedDesc } : art
+        art === activeArticle ? { ...art, summary: editedDesc } : art
       )
     );
-    setActiveArticle((prev) => prev ? { ...prev, desc: editedDesc } : null);
+    setActiveArticle({ ...activeArticle, summary: editedDesc });
     setIsEditingDesc(false);
   };
-  
+
   return (
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
@@ -156,7 +156,7 @@ export default function App() {
             onClick={() => {
               setActiveArticle(art);
               setIsEditingDesc(false);
-              setEditedDesc(art.desc);
+              setEditedDesc(reviewMode ? art.desc : art.summary);
             }}
             className="article-card"
             whileTap={{ scale: 0.97 }}
@@ -189,7 +189,7 @@ export default function App() {
                 &times;
               </button>
               <h2 className="modal-title">{activeArticle.title}</h2>
-              {reviewMode && isEditingDesc ? (
+              {!reviewMode && isEditingDesc ? (
                 <>
                   <textarea
                     className="url-input"
@@ -203,8 +203,8 @@ export default function App() {
                   {reviewMode ? activeArticle.desc : activeArticle.summary}
                 </p>
               )}
-              {reviewMode && !isEditingDesc && (
-                <button className="btn blue" onClick={() => setIsEditingDesc(true)}>✏️ Edit Description</button>
+              {!reviewMode && !isEditingDesc && (
+                <button className="btn blue" onClick={() => setIsEditingDesc(true)}>✏️ Edit Summary</button>
               )}
               <a
                 href={activeArticle.url}
