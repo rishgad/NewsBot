@@ -132,7 +132,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
+      <h1 className="app-title"> Decentralized AI News Bot</h1>
 
       {reviewMode && (
         <div className="input-area">
