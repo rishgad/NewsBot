@@ -9,6 +9,8 @@ export default function App() {
   const [newUrl, setNewUrl] = useState('');
   const [articles, setArticles] = useState([]);
   const [activeArticle, setActiveArticle] = useState(null);
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [editedDesc, setEditedDesc] = useState('');
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
@@ -118,6 +120,16 @@ export default function App() {
 
   const list = reviewMode ? draftArticles : articles;
 
+  const handleSaveDesc = () => {
+    setDraftArticles((prev) =>
+      prev.map((art) =>
+        art === activeArticle ? { ...art, desc: editedDesc } : art
+      )
+    );
+    setActiveArticle({ ...activeArticle, desc: editedDesc });
+    setIsEditingDesc(false);
+  };
+
   return (
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
@@ -141,7 +153,11 @@ export default function App() {
           <motion.div
             key={idx}
             layout
-            onClick={() => setActiveArticle(art)}
+            onClick={() => {
+              setActiveArticle(art);
+              setIsEditingDesc(false);
+              setEditedDesc(art.desc);
+            }}
             className="article-card"
             whileTap={{ scale: 0.97 }}
           >
@@ -173,9 +189,23 @@ export default function App() {
                 &times;
               </button>
               <h2 className="modal-title">{activeArticle.title}</h2>
-              <p className="modal-desc">
-                {reviewMode ? activeArticle.desc : activeArticle.summary}
-              </p>
+              {reviewMode && isEditingDesc ? (
+                <>
+                  <textarea
+                    className="url-input"
+                    value={editedDesc}
+                    onChange={(e) => setEditedDesc(e.target.value)}
+                  />
+                  <button className="btn green" onClick={handleSaveDesc}>💾 Save</button>
+                </>
+              ) : (
+                <p className="modal-desc">
+                  {reviewMode ? activeArticle.desc : activeArticle.summary}
+                </p>
+              )}
+              {reviewMode && !isEditingDesc && (
+                <button className="btn blue" onClick={() => setIsEditingDesc(true)}>✏️ Edit Description</button>
+              )}
               <a
                 href={activeArticle.url}
                 target="_blank"
