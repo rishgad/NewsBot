@@ -123,13 +123,13 @@ export default function App() {
   const handleSaveDesc = () => {
     setDraftArticles((prev) =>
       prev.map((art) =>
-        art === activeArticle ? { ...art, desc: editedDesc } : art
+        art.url === activeArticle.url ? { ...art, desc: editedDesc } : art
       )
     );
-    setActiveArticle({ ...activeArticle, desc: editedDesc });
+    setActiveArticle((prev) => prev ? { ...prev, desc: editedDesc } : null);
     setIsEditingDesc(false);
   };
-
+  
   return (
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
