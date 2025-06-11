@@ -15,7 +15,7 @@ export default function App() {
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/news');
+      const response = await fetch('/api/news');
       const news = await response.json();
       const initialDrafts = news.articles.map((art) => ({
         title: art.title,
@@ -41,7 +41,7 @@ export default function App() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/fetchArticle', {
+      const res = await fetch('/api/fetchArticle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: newUrl.trim() }),
@@ -68,7 +68,7 @@ export default function App() {
     try {
       const withSummaries = await Promise.all(
         draftArticles.map(async (art) => {
-          const sumRes = await fetch('/summarize', {
+          const sumRes = await fetch('/api/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: art.desc }),
@@ -93,7 +93,7 @@ export default function App() {
 
   const sendToTelegram = useCallback(async () => {
     try {
-      const res = await fetch('/sendTelegram', {
+      const res = await fetch('/api/sendTelegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ articles }),
