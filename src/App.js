@@ -132,7 +132,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <h1 className="app-title"> Decentralized AI News Bot</h1>
+      <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
       {reviewMode && (
         <div className="input-area">
@@ -221,6 +221,7 @@ export default function App() {
 
       {!reviewMode && (
         <div className="footer">
+          <button onClick={() => setReviewMode(true)} className="btn gray">🔙 Go Back</button>
           <button onClick={sendToTelegram} className="btn purple">📤 Send to Telegram</button>
         </div>
       )}
