@@ -1,0 +1,199 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import './App.css';
+
+export default function App() {
+  const [draftArticles, setDraftArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [reviewMode, setReviewMode] = useState(true);
+  const [newUrl, setNewUrl] = useState('');
+  const [articles, setArticles] = useState([]);
+  const [activeArticle, setActiveArticle] = useState(null);
+
+  const fetchInitialArticles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/news');
+      const news = await response.json();
+      const initialDrafts = news.articles.map((art) => ({
+        title: art.title,
+        desc: art.description || art.content || art.title || '',
+        url: art.url,
+      }));
+      setDraftArticles(initialDrafts);
+    } catch (err) {
+      console.error('Error loading news:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInitialArticles();
+  }, [fetchInitialArticles]);
+
+  const addByUrl = useCallback(async () => {
+    if (!newUrl.trim()) {
+      alert('Please paste a URL first.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/fetchArticle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: newUrl.trim() }),
+      });
+      const json = await res.json();
+      if (json.error) {
+        throw new Error(json.error);
+      }
+      setDraftArticles((prev) => [
+        ...prev,
+        { title: json.title, desc: json.desc, url: newUrl.trim() },
+      ]);
+      setNewUrl('');
+    } catch (err) {
+      console.error('Error fetching article metadata:', err);
+      alert('❌ Failed to fetch the URL. Check console for details.');
+    } finally {
+      setLoading(false);
+    }
+  }, [newUrl]);
+
+  const generateSummaries = useCallback(async () => {
+    setLoading(true);
+    try {
+      const withSummaries = await Promise.all(
+        draftArticles.map(async (art) => {
+          const sumRes = await fetch('/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: art.desc }),
+          });
+          const { summary } = await sumRes.json();
+          return {
+            title: art.title,
+            url: art.url,
+            summary,
+            isEditing: false,
+          };
+        })
+      );
+      setArticles(withSummaries);
+      setReviewMode(false);
+    } catch (err) {
+      console.error('Error generating summaries:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [draftArticles]);
+
+  const sendToTelegram = useCallback(async () => {
+    try {
+      const res = await fetch('/sendTelegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articles }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        alert('✅ Sent to Telegram!');
+      } else {
+        throw new Error(json.error || 'Unknown error');
+      }
+    } catch (err) {
+      console.error('Error sending to Telegram:', err);
+      alert('❌ Failed to send to Telegram: ' + err.message);
+    }
+  }, [articles]);
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <p>Loading…</p>
+      </div>
+    );
+  }
+
+  const list = reviewMode ? draftArticles : articles;
+
+  return (
+    <div className="app-container">
+      <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
+
+      {reviewMode && (
+        <div className="input-area">
+          <input
+            type="text"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            className="url-input"
+            placeholder="Paste article URL here"
+          />
+          <button onClick={addByUrl} className="btn green">➕ Add Article by URL</button>
+          <button onClick={generateSummaries} className="btn blue">⚡ Generate Summaries</button>
+        </div>
+      )}
+
+      <div className="article-grid">
+        {list.map((art, idx) => (
+          <motion.div
+            key={idx}
+            layout
+            onClick={() => setActiveArticle(art)}
+            className="article-card"
+            whileTap={{ scale: 0.97 }}
+          >
+            <div className="article-icon">📰</div>
+            <h2 className="article-title">{art.title}</h2>
+          </motion.div>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {activeArticle && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              layout
+              className="modal-content"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+            >
+              <button
+                onClick={() => setActiveArticle(null)}
+                className="modal-close"
+              >
+                &times;
+              </button>
+              <h2 className="modal-title">{activeArticle.title}</h2>
+              <p className="modal-desc">
+                {reviewMode ? activeArticle.desc : activeArticle.summary}
+              </p>
+              <a
+                href={activeArticle.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="modal-link"
+              >
+                🌐 Read Full Article
+              </a>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {!reviewMode && (
+        <div className="footer">
+          <button onClick={sendToTelegram} className="btn purple">📤 Send to Telegram</button>
+        </div>
+      )}
+    </div>
+  );
+}
