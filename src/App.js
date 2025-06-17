@@ -8,6 +8,7 @@ export default function App() {
   const [reviewMode, setReviewMode] = useState(true);
   const [newUrl, setNewUrl] = useState('');
   const [articles, setArticles] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [isEditingDescIndex, setIsEditingDescIndex] = useState(null);
   const [editedDesc, setEditedDesc] = useState('');
 
@@ -47,14 +48,11 @@ export default function App() {
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      setDraftArticles((prev) => [
-        ...prev,
-        { title: json.title, desc: json.desc, url: newUrl.trim() },
-      ]);
+      setDraftArticles((prev) => [...prev, { title: json.title, desc: json.desc, url: newUrl.trim() }]);
       setNewUrl('');
     } catch (err) {
       console.error('Error fetching article metadata:', err);
-      alert('❌ Failed to fetch the URL. Check console for details.');
+      alert('❌ Failed to fetch the URL.');
     } finally {
       setLoading(false);
     }
@@ -71,16 +69,12 @@ export default function App() {
             body: JSON.stringify({ text: art.desc }),
           });
           const { summary } = await sumRes.json();
-          return {
-            title: art.title,
-            url: art.url,
-            summary,
-          };
+          return { title: art.title, url: art.url, summary };
         })
       );
       setArticles(withSummaries);
+      setSelected(withSummaries.map(() => true));
       setReviewMode(false);
-      setIsEditingDescIndex(null);
     } catch (err) {
       console.error('Error generating summaries:', err);
     } finally {
@@ -89,11 +83,16 @@ export default function App() {
   }, [draftArticles]);
 
   const sendToTelegram = useCallback(async () => {
+    const selectedArticles = articles.filter((_, i) => selected[i]);
+    if (selectedArticles.length === 0) {
+      alert('⚠️ Please select at least one article to send.');
+      return;
+    }
     try {
       const res = await fetch('/api/sendTelegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articles }),
+        body: JSON.stringify({ articles: selectedArticles }),
       });
       const json = await res.json();
       if (json.ok) {
@@ -105,34 +104,27 @@ export default function App() {
       console.error('Error sending to Telegram:', err);
       alert('❌ Failed to send to Telegram: ' + err.message);
     }
-  }, [articles]);
+  }, [articles, selected]);
 
-  // Remove article by index
-  const removeArticle = (index) => {
+  const removeArticle = (idx) => {
     if (reviewMode) {
-      setDraftArticles((prev) => prev.filter((_, i) => i !== index));
+      const newDrafts = [...draftArticles];
+      newDrafts.splice(idx, 1);
+      setDraftArticles(newDrafts);
     } else {
-      setArticles((prev) => prev.filter((_, i) => i !== index));
-      if (isEditingDescIndex === index) setIsEditingDescIndex(null);
+      const newArticles = [...articles];
+      const newSelected = [...selected];
+      newArticles.splice(idx, 1);
+      newSelected.splice(idx, 1);
+      setArticles(newArticles);
+      setSelected(newSelected);
     }
   };
 
-  const handleSaveDesc = (index) => {
-    setArticles((prev) =>
-      prev.map((art, i) =>
-        i === index ? { ...art, summary: editedDesc } : art
-      )
-    );
-    setIsEditingDescIndex(null);
+  const toggleSelectAll = () => {
+    const allSelected = selected.every(Boolean);
+    setSelected(articles.map(() => !allSelected));
   };
-
-  if (loading) {
-    return (
-      <div className="loading-screen">
-        <p>Loading…</p>
-      </div>
-    );
-  }
 
   const list = reviewMode ? draftArticles : articles;
 
@@ -142,75 +134,65 @@ export default function App() {
 
       <div className="article-grid">
         {list.map((art, idx) => (
-          <motion.div
-            key={idx}
-            layout
-            className="article-card"
-          >
+          <motion.div key={idx} layout className="article-card">
             <div className="article-header">
-              <a
-                href={art.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="article-title-link"
-              >
+              <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
                 {art.title}
               </a>
-              <button
-                className="btn red remove-btn"
-                onClick={() => removeArticle(idx)}
-                aria-label={`Remove article ${art.title}`}
-              >
+              {!reviewMode && (
+                <input
+                  type="checkbox"
+                  checked={selected[idx] || false}
+                  onChange={(e) => {
+                    const updated = [...selected];
+                    updated[idx] = e.target.checked;
+                    setSelected(updated);
+                  }}
+                  title="Select article"
+                />
+              )}
+              <button className="btn red remove-btn" onClick={() => removeArticle(idx)}>
                 ❌ Remove
               </button>
             </div>
-
-            <p className="article-preview">
-              {reviewMode ? (
-                art.desc.slice(0, 100) + (art.desc.length > 100 ? '…' : '')
-              ) : isEditingDescIndex === idx ? (
-                <>
-                  <textarea
-                    className="url-input"
-                    value={editedDesc}
-                    onChange={(e) => setEditedDesc(e.target.value)}
-                  />
-                  <div className="edit-buttons">
-                    <button
-                      className="btn green"
-                      onClick={() => handleSaveDesc(idx)}
-                    >
-                      💾 Save
-                    </button>
-                    <button
-                      className="btn gray"
-                      onClick={() => setIsEditingDescIndex(null)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {art.summary}
-                  <button
-                    className="btn blue edit-btn"
-                    onClick={() => {
-                      setIsEditingDescIndex(idx);
-                      setEditedDesc(art.summary);
-                    }}
-                  >
-                    ✏️ Edit
-                  </button>
-                </>
-              )}
-            </p>
+            {!reviewMode && isEditingDescIndex === idx ? (
+              <>
+                <textarea
+                  className="url-input"
+                  value={editedDesc}
+                  onChange={(e) => setEditedDesc(e.target.value)}
+                />
+                <button
+                  className="btn green"
+                  onClick={() => {
+                    const updated = [...articles];
+                    updated[idx].summary = editedDesc;
+                    setArticles(updated);
+                    setIsEditingDescIndex(null);
+                  }}
+                >
+                  💾 Save
+                </button>
+              </>
+            ) : (
+              <p className="article-desc">
+                {reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}
+              </p>
+            )}
+            {!reviewMode && isEditingDescIndex !== idx && (
+              <button className="btn blue" onClick={() => {
+                setEditedDesc(articles[idx].summary);
+                setIsEditingDescIndex(idx);
+              }}>
+                ✏️ Edit
+              </button>
+            )}
           </motion.div>
         ))}
       </div>
 
       {reviewMode ? (
-        <div className="input-area bottom-area">
+        <div className="bottom-controls">
           <input
             type="text"
             value={newUrl}
@@ -218,23 +200,17 @@ export default function App() {
             className="url-input"
             placeholder="Paste article URL here"
           />
-          <button onClick={addByUrl} className="btn green">
-            ➕ Add Article by URL
-          </button>
-          <button onClick={generateSummaries} className="btn blue big-btn">
-            ⚡ Generate Summaries
-          </button>
+          <button onClick={addByUrl} className="btn green">➕ Add Article</button>
+          <button onClick={generateSummaries} className="btn blue big">⚡ Generate Summaries</button>
         </div>
       ) : (
         <div className="footer">
-          <button onClick={() => setReviewMode(true)} className="btn gray">
-            🔙 Go Back
-          </button>
-          <button onClick={sendToTelegram} className="btn purple">
-            📤 Send to Telegram
-          </button>
+          <button onClick={toggleSelectAll} className="btn gray">🟢 Toggle Select All</button>
+          <button onClick={() => setReviewMode(true)} className="btn gray">🔙 Back</button>
+          <button onClick={sendToTelegram} className="btn purple">📤 Send to Telegram</button>
         </div>
       )}
     </div>
   );
 }
+// App.css
