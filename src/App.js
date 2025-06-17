@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import './App.css';
+import './App.css'; // Only importing CSS, no backend logic here
 
 export default function App() {
+  // State and backend API calls remain here, but no CSS definitions
   const [draftArticles, setDraftArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewMode, setReviewMode] = useState(true);
@@ -12,12 +13,12 @@ export default function App() {
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editedDesc, setEditedDesc] = useState('');
 
+  // Fetch articles (backend calls)
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/news');
       const news = await response.json();
-      console.log('Fetched news:', news);
       const initialDrafts = news.articles.map((art) => ({
         title: art.title,
         desc: art.description || art.content || art.title || '',
@@ -48,13 +49,8 @@ export default function App() {
         body: JSON.stringify({ url: newUrl.trim() }),
       });
       const json = await res.json();
-      if (json.error) {
-        throw new Error(json.error);
-      }
-      setDraftArticles((prev) => [
-        ...prev,
-        { title: json.title, desc: json.desc, url: newUrl.trim() },
-      ]);
+      if (json.error) throw new Error(json.error);
+      setDraftArticles((prev) => [...prev, { title: json.title, desc: json.desc, url: newUrl.trim() }]);
       setNewUrl('');
     } catch (err) {
       console.error('Error fetching article metadata:', err);
@@ -75,12 +71,7 @@ export default function App() {
             body: JSON.stringify({ text: art.desc }),
           });
           const { summary } = await sumRes.json();
-          return {
-            title: art.title,
-            url: art.url,
-            summary,
-            isEditing: false,
-          };
+          return { title: art.title, url: art.url, summary, isEditing: false };
         })
       );
       setArticles(withSummaries);
@@ -100,24 +91,26 @@ export default function App() {
         body: JSON.stringify({ articles }),
       });
       const json = await res.json();
-      if (json.ok) {
-        alert('✅ Sent to Telegram!');
-      } else {
-        throw new Error(json.error || 'Unknown error');
-      }
+      if (json.ok) alert('✅ Sent to Telegram!');
+      else throw new Error(json.error || 'Unknown error');
     } catch (err) {
       console.error('Error sending to Telegram:', err);
       alert('❌ Failed to send to Telegram: ' + err.message);
     }
   }, [articles]);
 
-  if (loading) {
-    return (
-      <div className="loading-screen">
-        <p>Loading…</p>
-      </div>
-    );
-  }
+  const removeArticle = (index) => {
+    if (reviewMode) setDraftArticles((prev) => prev.filter((_, i) => i !== index));
+    else setArticles((prev) => prev.filter((_, i) => i !== index));
+
+    const currentList = reviewMode ? draftArticles : articles;
+    if (activeArticle === currentList[index]) {
+      setActiveArticle(null);
+      setIsEditingDesc(false);
+    }
+  };
+
+  if (loading) return <div className="loading-screen"><p>Loading…</p></div>;
 
   const list = reviewMode ? draftArticles : articles;
 
@@ -154,16 +147,31 @@ export default function App() {
           <motion.div
             key={idx}
             layout
-            onClick={() => {
-              setActiveArticle(art);
-              setIsEditingDesc(false);
-              setEditedDesc(reviewMode ? art.desc : art.summary);
-            }}
             className="article-card"
             whileTap={{ scale: 0.97 }}
           >
-            <div className="article-icon">📰</div>
-            <h2 className="article-title">{art.title}</h2>
+            <div
+              style={{ flex: 1, cursor: 'pointer' }}
+              onClick={() => {
+                setActiveArticle(art);
+                setIsEditingDesc(false);
+                setEditedDesc(reviewMode ? art.desc : art.summary);
+              }}
+            >
+              <div className="article-icon">📰</div>
+              <h2 className="article-title">{art.title}</h2>
+            </div>
+
+            <button
+              className="remove-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeArticle(idx);
+              }}
+              aria-label="Remove article"
+            >
+              Remove
+            </button>
           </motion.div>
         ))}
       </div>
@@ -200,9 +208,7 @@ export default function App() {
                   <button className="btn green" onClick={handleSaveDesc}>💾 Save</button>
                 </>
               ) : (
-                <p className="modal-desc">
-                  {reviewMode ? activeArticle.desc : activeArticle.summary}
-                </p>
+                <p className="modal-desc">{reviewMode ? activeArticle.desc : activeArticle.summary}</p>
               )}
               {!reviewMode && !isEditingDesc && (
                 <button className="btn blue" onClick={() => setIsEditingDesc(true)}>✏️ Edit Summary</button>

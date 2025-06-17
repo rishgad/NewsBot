@@ -1,118 +1,115 @@
-/* Updated Landing Page Style */
+/* General styling */
 .app-container {
-  min-height: 100vh;
-  background: #ffffff;
-  padding: 2rem;
-  font-family: sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
 }
 
 .app-title {
-  font-size: 1.75rem;
-  font-weight: bold;
-  text-align: left;
+  text-align: center;
   margin-bottom: 1rem;
-}
-
-.distrobot-box {
-  border: 2px solid #000;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  background: #fff;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.distrobot-header {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-}
-
-.headline-list {
-  margin-top: 1rem;
-}
-
-.headline-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #ddd;
-  gap: 1rem;
-}
-
-.headline-text {
-  flex: 1;
-  font-size: 0.9rem;
-  line-height: 1.3;
-}
-
-.remove-btn {
-  background-color: #ef4444; /* red */
-  border: none;
-  color: white;
-  padding: 0.4rem 0.75rem;
-  border-radius: 0.3rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-
-.remove-btn:hover {
-  background-color: #b91c1c;
-}
-
-.checkbox-section {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  margin-top: 0.5rem;
-}
-
-.select-all {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-top: 0.5rem;
-  font-weight: bold;
-  gap: 0.5rem;
-}
-
-.instructions-box {
-  background-color: #fffbe6;
-  border: 1px dashed #aaa;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  color: #555;
-  margin-top: 1rem;
 }
 
 .input-area {
-  margin-top: 1rem;
   display: flex;
-  flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .url-input {
-  width: 100%;
-  border: 2px solid #ddd;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.3rem;
 }
 
 .btn {
-  background-color: #6b21a8;
-  color: white;
-  font-weight: bold;
-  border: none;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
   cursor: pointer;
-  transition: background 0.2s;
+  border: none;
+  border-radius: 0.3rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
 }
 
-.btn:hover {
-  background-color: #581c87;
+.btn.green {
+  background-color: #2f855a;
+  color: white;
+}
+
+.btn.green:hover {
+  background-color: #276749;
+}
+
+.btn.blue {
+  background-color: #3182ce;
+  color: white;
+}
+
+.btn.blue:hover {
+  background-color: #2b6cb0;
+}
+
+.btn.gray {
+  background-color: #718096;
+  color: white;
+}
+
+.btn.gray:hover {
+  background-color: #4a5568;
+}
+
+.btn.purple {
+  background-color: #6b46c1;
+  color: white;
+}
+
+.btn.purple:hover {
+  background-color: #553c9a;
+}
+
+/* Article grid and cards */
+.article-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
+  gap: 1rem;
+}
+
+.article-card {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.article-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.article-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Remove button */
+.remove-btn {
+  background-color: #e53e3e;
+  border: none;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 1rem;
+  transition: background-color 0.2s;
+  align-self: center;
+  height: 2
 }
