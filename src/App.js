@@ -74,7 +74,7 @@ export default function App() {
       );
       setArticles(withSummaries);
       setReviewMode(false);
-      setSelectedIndexes(new Set()); // reset selections
+      setSelectedIndexes(new Set());
       setExpandedArticleIndex(null);
     } catch (err) {
       console.error('Error generating summaries:', err);
@@ -115,7 +115,6 @@ export default function App() {
     if (reviewMode) setDraftArticles((prev) => prev.filter((_, i) => i !== index));
     else setArticles((prev) => prev.filter((_, i) => i !== index));
 
-    // Reset expanded or editing if removing current
     if (expandedArticleIndex === index) {
       setExpandedArticleIndex(null);
       setIsEditingDescIndex(null);
@@ -206,7 +205,7 @@ export default function App() {
                             setEditedDesc(art.summary);
                           }}
                         >
-                          ✏️ Edit Summary
+                          ✏️ Edit
                         </button>
                       )}
                     </>
@@ -240,12 +239,14 @@ export default function App() {
         </div>
       )}
 
-      {/* Generate summaries button at bottom and bigger */}
-      <div className="generate-summaries-container">
-        <button onClick={generateSummaries} className="btn large blue">
-          ⚡ Generate Summaries
-        </button>
-      </div>
+      {/* Generate summaries button ONLY on first page */}
+      {reviewMode && (
+        <div className="generate-summaries-container">
+          <button onClick={generateSummaries} className="btn large blue">
+            ⚡ Generate Summaries
+          </button>
+        </div>
+      )}
 
       {!reviewMode && (
         <div className="footer">
