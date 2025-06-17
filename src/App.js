@@ -216,7 +216,9 @@ export default function App() {
             placeholder="Paste article URL here"
           />
           <button onClick={addByUrl} className="btn green">➕ Add Article</button>
-          <button onClick={generateSummaries} className="btn blue big">⚡ Generate Summaries</button>
+          <button onClick={generateSummaries} className="btn blue big" disabled={loading}>
+            {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
+          </button>
         </div>
       ) : (
         <div className="footer">
