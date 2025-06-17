@@ -254,3 +254,50 @@ body, html, #root {
     padding: 0.2rem 0.5rem;
   }
 }
+/* ... everything above remains exactly as you had ... */
+
+/* === New styles for select checkboxes and select all === */
+.select-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.select-checkbox {
+  transform: scale(1.2);
+  margin-right: 0.4rem;
+}
+
+.select-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Container to align checkboxes with article cards */
+.article-card .select-label {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+}
+
+/* Checkbox on mobile */
+@media (max-width: 480px) {
+  .select-label {
+    font-size: 0.85rem;
+  }
+
+  .select-controls {
+    gap: 0.6rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .select-checkbox {
+    transform: scale(1.1);
+  }
+}

@@ -131,7 +131,19 @@ export default function App() {
   return (
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
-
+  
+      {!reviewMode && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginBottom: '1rem' }}>
+          <button onClick={toggleSelectAll} className="btn gray">✅ Select All</button>
+          <button
+            onClick={() => setSelected(articles.map(() => false))}
+            className="btn gray"
+          >
+            🚫 Deselect All
+          </button>
+        </div>
+      )}
+  
       <div className="article-grid">
         {list.map((art, idx) => (
           <motion.div key={idx} layout className="article-card">
@@ -180,17 +192,20 @@ export default function App() {
               </p>
             )}
             {!reviewMode && isEditingDescIndex !== idx && (
-              <button className="btn blue" onClick={() => {
-                setEditedDesc(articles[idx].summary);
-                setIsEditingDescIndex(idx);
-              }}>
+              <button
+                className="btn blue"
+                onClick={() => {
+                  setEditedDesc(articles[idx].summary);
+                  setIsEditingDescIndex(idx);
+                }}
+              >
                 ✏️ Edit
               </button>
             )}
           </motion.div>
         ))}
       </div>
-
+  
       {reviewMode ? (
         <div className="bottom-controls">
           <input
@@ -212,5 +227,4 @@ export default function App() {
       )}
     </div>
   );
-}
-// App.css
+}  
