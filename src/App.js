@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import './App.css';
 
 export default function App() {
@@ -46,9 +46,7 @@ export default function App() {
         body: JSON.stringify({ url: newUrl.trim() }),
       });
       const json = await res.json();
-      if (json.error) {
-        throw new Error(json.error);
-      }
+      if (json.error) throw new Error(json.error);
       setDraftArticles((prev) => [
         ...prev,
         { title: json.title, desc: json.desc, url: newUrl.trim() },
@@ -109,6 +107,16 @@ export default function App() {
     }
   }, [articles]);
 
+  // Remove article by index
+  const removeArticle = (index) => {
+    if (reviewMode) {
+      setDraftArticles((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      setArticles((prev) => prev.filter((_, i) => i !== index));
+      if (isEditingDescIndex === index) setIsEditingDescIndex(null);
+    }
+  };
+
   const handleSaveDesc = (index) => {
     setArticles((prev) =>
       prev.map((art, i) =>
@@ -132,7 +140,6 @@ export default function App() {
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
-      {/* Article list */}
       <div className="article-grid">
         {list.map((art, idx) => (
           <motion.div
@@ -149,81 +156,78 @@ export default function App() {
               >
                 {art.title}
               </a>
+              <button
+                className="btn red remove-btn"
+                onClick={() => removeArticle(idx)}
+                aria-label={`Remove article ${art.title}`}
+              >
+                ❌ Remove
+              </button>
             </div>
 
             <p className="article-preview">
-              {reviewMode
-                ? art.desc.slice(0, 100) + (art.desc.length > 100 ? '…' : '')
-                : isEditingDescIndex === idx ? (
-                  <>
-                    <textarea
-                      className="url-input"
-                      value={editedDesc}
-                      onChange={(e) => setEditedDesc(e.target.value)}
-                    />
-                    <div className="edit-buttons">
-                      <button
-                        className="btn green"
-                        onClick={() => handleSaveDesc(idx)}
-                      >
-                        💾 Save
-                      </button>
-                      <button
-                        className="btn gray"
-                        onClick={() => setIsEditingDescIndex(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {art.summary.slice(0, 100) + (art.summary.length > 100 ? '…' : '')}
+              {reviewMode ? (
+                art.desc.slice(0, 100) + (art.desc.length > 100 ? '…' : '')
+              ) : isEditingDescIndex === idx ? (
+                <>
+                  <textarea
+                    className="url-input"
+                    value={editedDesc}
+                    onChange={(e) => setEditedDesc(e.target.value)}
+                  />
+                  <div className="edit-buttons">
                     <button
-                      className="btn blue edit-btn"
-                      onClick={() => {
-                        setIsEditingDescIndex(idx);
-                        setEditedDesc(art.summary);
-                      }}
+                      className="btn green"
+                      onClick={() => handleSaveDesc(idx)}
                     >
-                      ✏️ Edit
+                      💾 Save
                     </button>
-                  </>
-                )}
+                    <button
+                      className="btn gray"
+                      onClick={() => setIsEditingDescIndex(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {art.summary}
+                  <button
+                    className="btn blue edit-btn"
+                    onClick={() => {
+                      setIsEditingDescIndex(idx);
+                      setEditedDesc(art.summary);
+                    }}
+                  >
+                    ✏️ Edit
+                  </button>
+                </>
+              )}
             </p>
           </motion.div>
         ))}
       </div>
 
-      {/* Controls */}
       {reviewMode ? (
-        <div className="controls-bottom">
-          <button onClick={generateSummaries} className="btn big blue">
+        <div className="input-area bottom-area">
+          <input
+            type="text"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            className="url-input"
+            placeholder="Paste article URL here"
+          />
+          <button onClick={addByUrl} className="btn green">
+            ➕ Add Article by URL
+          </button>
+          <button onClick={generateSummaries} className="btn blue big-btn">
             ⚡ Generate Summaries
           </button>
-
-          <div className="input-area">
-            <input
-              type="text"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              className="url-input"
-              placeholder="Paste article URL here"
-            />
-            <button onClick={addByUrl} className="btn green">
-              ➕ Add Article by URL
-            </button>
-          </div>
         </div>
       ) : (
         <div className="footer">
-          <button
-            onClick={() => {
-              setReviewMode(true);
-              setIsEditingDescIndex(null);
-            }}
-            className="btn gray"
-          >
+          <button onClick={() => setReviewMode(true)} className="btn gray">
             🔙 Go Back
           </button>
           <button onClick={sendToTelegram} className="btn purple">
