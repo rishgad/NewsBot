@@ -17,6 +17,7 @@ export default function App() {
     try {
       const response = await fetch('/api/news');
       const news = await response.json();
+      console.log('Fetched news:', news);
       const initialDrafts = news.articles.map((art) => ({
         title: art.title,
         desc: art.description || art.content || art.title || '',
