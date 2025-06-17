@@ -1,7 +1,14 @@
+.article-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.3rem;
+}
+
 .article-title-link {
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: #3182ce;
+  flex: 1;
+  font-weight: bold;
+  color: #333;
   text-decoration: none;
 }
 
@@ -10,26 +17,17 @@
 }
 
 .article-preview {
-  margin-top: 0.3rem;
-  color: #555;
   font-size: 0.9rem;
-  line-height: 1.2;
+  color: #666;
+  margin-bottom: 0.5rem;
 }
 
-.article-card {
-  background: #f9f9f9;
-  padding: 1rem;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  position: relative;
+.article-full-desc {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
 }
 
 .remove-btn {
-  position: absolute;
-  top: 6px;
-  right: 6px;
   background: transparent;
   border: none;
   color: #cc3333;
@@ -37,24 +35,32 @@
   cursor: pointer;
 }
 
-.input-area-bottom {
-  margin-top: 1.5rem;
+.toggle-desc {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.generate-summaries-container {
+  margin-top: 2rem;
   display: flex;
-  gap: 0.6rem;
   justify-content: center;
 }
 
-.url-input {
-  flex: 1;
-  padding: 0.5rem 0.8rem;
-  font-size: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+.btn.large {
+  font-size: 1.25rem;
+  padding: 0.75rem 1.5rem;
 }
 
-.top-buttons {
+.article-card {
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 8px;
   margin-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
+  position: relative;
+}
+
+input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
 }

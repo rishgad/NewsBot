@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 
 export default function App() {
@@ -8,9 +7,10 @@ export default function App() {
   const [reviewMode, setReviewMode] = useState(true);
   const [newUrl, setNewUrl] = useState('');
   const [articles, setArticles] = useState([]);
-  const [activeArticle, setActiveArticle] = useState(null);
-  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [expandedArticleIndex, setExpandedArticleIndex] = useState(null);
   const [editedDesc, setEditedDesc] = useState('');
+  const [isEditingDescIndex, setIsEditingDescIndex] = useState(null);
+  const [selectedIndexes, setSelectedIndexes] = useState(new Set());
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
@@ -74,6 +74,8 @@ export default function App() {
       );
       setArticles(withSummaries);
       setReviewMode(false);
+      setSelectedIndexes(new Set()); // reset selections
+      setExpandedArticleIndex(null);
     } catch (err) {
       console.error('Error generating summaries:', err);
     } finally {
@@ -81,12 +83,24 @@ export default function App() {
     }
   }, [draftArticles]);
 
+  const handleSaveDesc = (idx) => {
+    setArticles((prev) =>
+      prev.map((art, i) => (i === idx ? { ...art, summary: editedDesc } : art))
+    );
+    setIsEditingDescIndex(null);
+  };
+
   const sendToTelegram = useCallback(async () => {
     try {
+      const selectedArticles = articles.filter((_, idx) => selectedIndexes.has(idx));
+      if (selectedArticles.length === 0) {
+        alert('Please select at least one article to send.');
+        return;
+      }
       const res = await fetch('/api/sendTelegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articles }),
+        body: JSON.stringify({ articles: selectedArticles }),
       });
       const json = await res.json();
       if (json.ok) alert('✅ Sent to Telegram!');
@@ -95,87 +109,120 @@ export default function App() {
       console.error('Error sending to Telegram:', err);
       alert('❌ Failed to send to Telegram: ' + err.message);
     }
-  }, [articles]);
+  }, [articles, selectedIndexes]);
 
   const removeArticle = (index) => {
     if (reviewMode) setDraftArticles((prev) => prev.filter((_, i) => i !== index));
     else setArticles((prev) => prev.filter((_, i) => i !== index));
 
-    const currentList = reviewMode ? draftArticles : articles;
-    if (activeArticle === currentList[index]) {
-      setActiveArticle(null);
-      setIsEditingDesc(false);
+    // Reset expanded or editing if removing current
+    if (expandedArticleIndex === index) {
+      setExpandedArticleIndex(null);
+      setIsEditingDescIndex(null);
     }
+  };
+
+  const toggleSelect = (index) => {
+    setSelectedIndexes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) newSet.delete(index);
+      else newSet.add(index);
+      return newSet;
+    });
   };
 
   if (loading) return <div className="loading-screen"><p>Loading…</p></div>;
 
   const list = reviewMode ? draftArticles : articles;
 
-  const handleSaveDesc = () => {
-    setArticles((prev) =>
-      prev.map((art) =>
-        art === activeArticle ? { ...art, summary: editedDesc } : art
-      )
-    );
-    setActiveArticle({ ...activeArticle, summary: editedDesc });
-    setIsEditingDesc(false);
-  };
-
   return (
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
-      {reviewMode && (
-        <div className="top-buttons">
-          <button onClick={generateSummaries} className="btn blue">⚡ Generate Summaries</button>
-        </div>
-      )}
-
       <div className="article-grid">
-        {list.map((art, idx) => (
-          <motion.div
-            key={idx}
-            layout
-            className="article-card"
-            whileTap={{ scale: 0.97 }}
-          >
-            <div
-              style={{ flex: 1, cursor: 'pointer' }}
-              onClick={() => {
-                setActiveArticle(art);
-                setIsEditingDesc(false);
-                setEditedDesc(reviewMode ? art.desc : art.summary);
-              }}
-            >
-              <a
-                href={art.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="article-title-link"
-                onClick={(e) => e.stopPropagation()} // prevent modal open if clicking link
-              >
-                {art.title}
-              </a>
+        {list.map((art, idx) => {
+          const isExpanded = expandedArticleIndex === idx;
+          const isEditing = isEditingDescIndex === idx;
+          return (
+            <div key={idx} className="article-card">
+              <div className="article-header">
+                {!reviewMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedIndexes.has(idx)}
+                    onChange={() => toggleSelect(idx)}
+                    aria-label="Select article"
+                  />
+                )}
+                <a
+                  href={art.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="article-title-link"
+                >
+                  {art.title}
+                </a>
+                <button
+                  className="remove-btn"
+                  onClick={() => removeArticle(idx)}
+                  aria-label="Remove article"
+                >
+                  Remove
+                </button>
+              </div>
+
               <p className="article-preview">
                 {reviewMode
                   ? art.desc.slice(0, 100) + (art.desc.length > 100 ? '…' : '')
                   : art.summary.slice(0, 100) + (art.summary.length > 100 ? '…' : '')}
               </p>
-            </div>
 
-            <button
-              className="remove-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                removeArticle(idx);
-              }}
-              aria-label="Remove article"
-            >
-              Remove
-            </button>
-          </motion.div>
-        ))}
+              {isExpanded && (
+                <>
+                  {isEditing ? (
+                    <>
+                      <textarea
+                        className="url-input"
+                        value={editedDesc}
+                        onChange={(e) => setEditedDesc(e.target.value)}
+                      />
+                      <button className="btn green" onClick={() => handleSaveDesc(idx)}>
+                        💾 Save
+                      </button>
+                      <button className="btn gray" onClick={() => setIsEditingDescIndex(null)}>
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="article-full-desc">
+                        {reviewMode ? art.desc : art.summary}
+                      </p>
+                      {!reviewMode && (
+                        <button
+                          className="btn blue"
+                          onClick={() => {
+                            setIsEditingDescIndex(idx);
+                            setEditedDesc(art.summary);
+                          }}
+                        >
+                          ✏️ Edit Summary
+                        </button>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+
+              <button
+                className="btn toggle-desc"
+                onClick={() => setExpandedArticleIndex(isExpanded ? null : idx)}
+              >
+                {isExpanded ? 'Hide Details' : 'Show Details'}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {reviewMode && (
@@ -187,64 +234,27 @@ export default function App() {
             className="url-input"
             placeholder="Paste article URL here"
           />
-          <button onClick={addByUrl} className="btn green">➕ Add Article by URL</button>
+          <button onClick={addByUrl} className="btn green">
+            ➕ Add Article by URL
+          </button>
         </div>
       )}
 
-      <AnimatePresence>
-        {activeArticle && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              layout
-              className="modal-content"
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-            >
-              <button
-                onClick={() => setActiveArticle(null)}
-                className="modal-close"
-              >
-                &times;
-              </button>
-              <h2 className="modal-title">{activeArticle.title}</h2>
-              {!reviewMode && isEditingDesc ? (
-                <>
-                  <textarea
-                    className="url-input"
-                    value={editedDesc}
-                    onChange={(e) => setEditedDesc(e.target.value)}
-                  />
-                  <button className="btn green" onClick={handleSaveDesc}>💾 Save</button>
-                </>
-              ) : (
-                <p className="modal-desc">{reviewMode ? activeArticle.desc : activeArticle.summary}</p>
-              )}
-              {!reviewMode && !isEditingDesc && (
-                <button className="btn blue" onClick={() => setIsEditingDesc(true)}>✏️ Edit Summary</button>
-              )}
-              <a
-                href={activeArticle.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="modal-link"
-              >
-                🌐 Read Full Article
-              </a>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Generate summaries button at bottom and bigger */}
+      <div className="generate-summaries-container">
+        <button onClick={generateSummaries} className="btn large blue">
+          ⚡ Generate Summaries
+        </button>
+      </div>
 
       {!reviewMode && (
         <div className="footer">
-          <button onClick={() => setReviewMode(true)} className="btn gray">🔙 Go Back</button>
-          <button onClick={sendToTelegram} className="btn purple">📤 Send to Telegram</button>
+          <button onClick={() => setReviewMode(true)} className="btn gray">
+            🔙 Go Back
+          </button>
+          <button onClick={sendToTelegram} className="btn purple">
+            📤 Send Selected to Telegram
+          </button>
         </div>
       )}
     </div>
