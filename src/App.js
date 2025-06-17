@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import './App.css'; // Only importing CSS, no backend logic here
+import './App.css';
 
 export default function App() {
-  // State and backend API calls remain here, but no CSS definitions
   const [draftArticles, setDraftArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewMode, setReviewMode] = useState(true);
@@ -13,7 +12,6 @@ export default function App() {
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editedDesc, setEditedDesc] = useState('');
 
-  // Fetch articles (backend calls)
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
     try {
@@ -129,15 +127,7 @@ export default function App() {
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
       {reviewMode && (
-        <div className="input-area">
-          <input
-            type="text"
-            value={newUrl}
-            onChange={(e) => setNewUrl(e.target.value)}
-            className="url-input"
-            placeholder="Paste article URL here"
-          />
-          <button onClick={addByUrl} className="btn green">➕ Add Article by URL</button>
+        <div className="top-buttons">
           <button onClick={generateSummaries} className="btn blue">⚡ Generate Summaries</button>
         </div>
       )}
@@ -158,8 +148,20 @@ export default function App() {
                 setEditedDesc(reviewMode ? art.desc : art.summary);
               }}
             >
-              <div className="article-icon">📰</div>
-              <h2 className="article-title">{art.title}</h2>
+              <a
+                href={art.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="article-title-link"
+                onClick={(e) => e.stopPropagation()} // prevent modal open if clicking link
+              >
+                {art.title}
+              </a>
+              <p className="article-preview">
+                {reviewMode
+                  ? art.desc.slice(0, 100) + (art.desc.length > 100 ? '…' : '')
+                  : art.summary.slice(0, 100) + (art.summary.length > 100 ? '…' : '')}
+              </p>
             </div>
 
             <button
@@ -175,6 +177,19 @@ export default function App() {
           </motion.div>
         ))}
       </div>
+
+      {reviewMode && (
+        <div className="input-area-bottom">
+          <input
+            type="text"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            className="url-input"
+            placeholder="Paste article URL here"
+          />
+          <button onClick={addByUrl} className="btn green">➕ Add Article by URL</button>
+        </div>
+      )}
 
       <AnimatePresence>
         {activeArticle && (

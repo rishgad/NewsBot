@@ -1,115 +1,60 @@
-/* General styling */
-.app-container {
-  max-width: 900px;
-  margin: 0 auto;
+.article-title-link {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #3182ce;
+  text-decoration: none;
+}
+
+.article-title-link:hover {
+  text-decoration: underline;
+}
+
+.article-preview {
+  margin-top: 0.3rem;
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.article-card {
+  background: #f9f9f9;
   padding: 1rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-}
-
-.app-title {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.input-area {
+  border-radius: 8px;
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 0.6rem;
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: #cc3333;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.input-area-bottom {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
 }
 
 .url-input {
   flex: 1;
-  padding: 0.5rem;
+  padding: 0.5rem 0.8rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 0.3rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
 }
 
-.btn {
-  cursor: pointer;
-  border: none;
-  border-radius: 0.3rem;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-  transition: background-color 0.3s;
-}
-
-.btn.green {
-  background-color: #2f855a;
-  color: white;
-}
-
-.btn.green:hover {
-  background-color: #276749;
-}
-
-.btn.blue {
-  background-color: #3182ce;
-  color: white;
-}
-
-.btn.blue:hover {
-  background-color: #2b6cb0;
-}
-
-.btn.gray {
-  background-color: #718096;
-  color: white;
-}
-
-.btn.gray:hover {
-  background-color: #4a5568;
-}
-
-.btn.purple {
-  background-color: #6b46c1;
-  color: white;
-}
-
-.btn.purple:hover {
-  background-color: #553c9a;
-}
-
-/* Article grid and cards */
-.article-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
-  gap: 1rem;
-}
-
-.article-card {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+.top-buttons {
+  margin-bottom: 1rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.article-icon {
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
-}
-
-.article-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-/* Remove button */
-.remove-btn {
-  background-color: #e53e3e;
-  border: none;
-  color: white;
-  padding: 0.4rem 0.8rem;
-  border-radius: 0.4rem;
-  cursor: pointer;
-  font-weight: bold;
-  margin-left: 1rem;
-  transition: background-color 0.2s;
-  align-self: center;
-  height: 2
+  justify-content: center;
+  gap: 1rem;
 }
