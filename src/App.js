@@ -16,23 +16,56 @@ export default function App() {
     setLoading(true);
     try {
       const response = await fetch('/api/news');
-      const news = await response.json();
-      const initialDrafts = news.articles.map((art) => ({
-        title: art.title,
-        desc: art.description || art.content || art.title || '',
-        url: art.url,
-      }));
-      setDraftArticles(initialDrafts);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API response error:', response.status, errorText);
+        throw new Error('API request failed with status ' + response.status);
+      }
+  
+      const rawText = await response.text();
+  
+      let news;
+      try {
+        news = JSON.parse(rawText);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError);
+        console.log('Raw response text:', rawText);
+        throw parseError;
+      }
+  
+      console.log('API /api/news response:', news);
+  
+      if (!news.articles || !Array.isArray(news.articles)) {
+        console.error('API response does not contain a valid articles array!');
+        setDraftArticles([]);
+      } else {
+        const initialDrafts = news.articles.map((art) => ({
+          title: art.title,
+          desc: art.description || art.content || art.title || '',
+          url: art.url,
+          source: art.source || '',
+          publishedAt: art.publishedAt || '',
+        }));
+        console.log('Mapped draftArticles:', initialDrafts);
+        setDraftArticles(initialDrafts);
+      }
     } catch (err) {
       console.error('Error loading news:', err);
     } finally {
       setLoading(false);
     }
   }, []);
+  
+
 
   useEffect(() => {
     fetchInitialArticles();
   }, [fetchInitialArticles]);
+
+  // Log draftArticles when updated
+  useEffect(() => {
+    console.log('draftArticles state updated:', draftArticles);
+  }, [draftArticles]);
 
   const addByUrl = useCallback(async () => {
     if (!newUrl.trim()) {
@@ -48,6 +81,7 @@ export default function App() {
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
+      console.log('Fetched article metadata:', json);
       setDraftArticles((prev) => [...prev, { title: json.title, desc: json.desc, url: newUrl.trim() }]);
       setNewUrl('');
     } catch (err) {
@@ -72,6 +106,7 @@ export default function App() {
           return { title: art.title, url: art.url, summary };
         })
       );
+      console.log('Generated summaries:', withSummaries);
       setArticles(withSummaries);
       setSelected(withSummaries.map(() => true));
       setReviewMode(false);
@@ -81,6 +116,11 @@ export default function App() {
       setLoading(false);
     }
   }, [draftArticles]);
+
+  // Log articles state when updated
+  useEffect(() => {
+    console.log('articles state updated:', articles);
+  }, [articles]);
 
   const sendToTelegram = useCallback(async () => {
     const selectedArticles = articles.filter((_, i) => selected[i]);
@@ -107,6 +147,7 @@ export default function App() {
   }, [articles, selected]);
 
   const removeArticle = (idx) => {
+    console.log('Removing article at index:', idx);
     if (reviewMode) {
       const newDrafts = [...draftArticles];
       newDrafts.splice(idx, 1);
@@ -128,22 +169,23 @@ export default function App() {
 
   const list = reviewMode ? draftArticles : articles;
 
+  console.log('Rendering list:', list);
+
   return (
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
-  
+
       {!reviewMode && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginBottom: '1rem' }}>
-          <button onClick={toggleSelectAll} className="btn gray">✅ Select All</button>
-          <button
-            onClick={() => setSelected(articles.map(() => false))}
-            className="btn gray"
-          >
+        <div className="select-controls">
+          <button onClick={toggleSelectAll} className="btn gray">
+            ✅ Select All
+          </button>
+          <button onClick={() => setSelected(articles.map(() => false))} className="btn gray">
             🚫 Deselect All
           </button>
         </div>
       )}
-  
+
       <div className="article-grid">
         {list.map((art, idx) => (
           <motion.div key={idx} layout className="article-card">
@@ -154,6 +196,8 @@ export default function App() {
               {!reviewMode && (
                 <input
                   type="checkbox"
+                  id={`select-article-${idx}`}
+                  className="select-checkbox"
                   checked={selected[idx] || false}
                   onChange={(e) => {
                     const updated = [...selected];
@@ -193,7 +237,7 @@ export default function App() {
             )}
             {!reviewMode && isEditingDescIndex !== idx && (
               <button
-                className="btn blue"
+                className="btn blue big-btn"
                 onClick={() => {
                   setEditedDesc(articles[idx].summary);
                   setIsEditingDescIndex(idx);
@@ -205,9 +249,9 @@ export default function App() {
           </motion.div>
         ))}
       </div>
-  
+
       {reviewMode ? (
-        <div className="bottom-controls">
+        <div className="bottom-area">
           <input
             type="text"
             value={newUrl}
@@ -215,18 +259,26 @@ export default function App() {
             className="url-input"
             placeholder="Paste article URL here"
           />
-          <button onClick={addByUrl} className="btn green">➕ Add Article</button>
-          <button onClick={generateSummaries} className="btn blue big" disabled={loading}>
+          <button onClick={addByUrl} className="btn green">
+            ➕ Add Article
+          </button>
+          <button onClick={generateSummaries} className="btn blue big-btn" disabled={loading}>
             {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
           </button>
         </div>
       ) : (
         <div className="footer">
-          <button onClick={toggleSelectAll} className="btn gray">🟢 Toggle Select All</button>
-          <button onClick={() => setReviewMode(true)} className="btn gray">🔙 Back</button>
-          <button onClick={sendToTelegram} className="btn purple">📤 Send to Telegram</button>
+          <button onClick={toggleSelectAll} className="btn gray">
+            🟢 Toggle Select All
+          </button>
+          <button onClick={() => setReviewMode(true)} className="btn gray">
+            🔙 Back
+          </button>
+          <button onClick={sendToTelegram} className="btn purple">
+            📤 Send to Telegram
+          </button>
         </div>
       )}
     </div>
   );
-}  
+}

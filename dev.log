@@ -1,0 +1,18 @@
+yarn run v1.22.22
+$ react-scripts start
+Starting the development server...
+
+Compiled successfully!
+
+You can now view client in the browser.
+
+  Local:            http://localhost:54644
+  On Your Network:  http://192.168.86.249:54644
+
+Note that the development build is not optimized.
+To create a production build, use yarn build.
+
+webpack compiled successfully
+Compiling...
+Compiled successfully!
+webpack compiled successfully
