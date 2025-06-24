@@ -237,7 +237,7 @@ export default function App() {
             )}
             {!reviewMode && isEditingDescIndex !== idx && (
               <button
-                className="btn blue big-btn"
+                className="btn blue"
                 onClick={() => {
                   setEditedDesc(articles[idx].summary);
                   setIsEditingDescIndex(idx);
@@ -262,7 +262,7 @@ export default function App() {
           <button onClick={addByUrl} className="btn green">
             ➕ Add Article
           </button>
-          <button onClick={generateSummaries} className="btn blue big-btn" disabled={loading}>
+          <button onClick={generateSummaries} className="btn blue" disabled={loading}>
             {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
           </button>
         </div>
