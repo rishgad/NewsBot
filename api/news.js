@@ -13,7 +13,8 @@ export default async function handler(req, res) {
     return new Promise((resolve, reject) => {
       getJson(
         {
-          engine: "google_news",
+          //engine: "google_news",
+          tbm: "nws",
           hl: "en",
           gl: "us",
           q: query,
