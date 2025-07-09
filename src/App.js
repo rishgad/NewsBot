@@ -175,17 +175,6 @@ export default function App() {
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
-      {!reviewMode && (
-        <div className="select-controls">
-          <button onClick={toggleSelectAll} className="btn gray">
-            ✅ Select All
-          </button>
-          <button onClick={() => setSelected(articles.map(() => false))} className="btn gray">
-            🚫 Deselect All
-          </button>
-        </div>
-      )}
-
       <div className="article-grid">
         {list.map((art, idx) => (
           <motion.div key={idx} layout className="article-card">
@@ -193,7 +182,7 @@ export default function App() {
               <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
                 {art.title}
               </a>
-              {!reviewMode && (
+              {reviewMode && (
                 <input
                   type="checkbox"
                   id={`select-article-${idx}`}
@@ -207,9 +196,6 @@ export default function App() {
                   title="Select article"
                 />
               )}
-              <button className="btn red remove-btn" onClick={() => removeArticle(idx)}>
-                ❌ Remove
-              </button>
             </div>
             {!reviewMode && isEditingDescIndex === idx ? (
               <>
