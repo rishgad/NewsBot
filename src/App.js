@@ -11,6 +11,7 @@ export default function App() {
   const [selected, setSelected] = useState([]);
   const [isEditingDescIndex, setIsEditingDescIndex] = useState(null);
   const [editedDesc, setEditedDesc] = useState('');
+  const [sentArticles, setSentArticles] = useState([]);
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
@@ -21,9 +22,9 @@ export default function App() {
         console.error('API response error:', response.status, errorText);
         throw new Error('API request failed with status ' + response.status);
       }
-  
+
       const rawText = await response.text();
-  
+
       let news;
       try {
         news = JSON.parse(rawText);
@@ -32,9 +33,7 @@ export default function App() {
         console.log('Raw response text:', rawText);
         throw parseError;
       }
-  
-      console.log('API /api/news response:', news);
-  
+
       if (!news.articles || !Array.isArray(news.articles)) {
         console.error('API response does not contain a valid articles array!');
         setDraftArticles([]);
@@ -43,10 +42,9 @@ export default function App() {
           title: art.title,
           desc: art.description || art.content || art.title || '',
           url: art.url,
-          source: art.source || '',
+          source: art.source?.name || art.source || 'Unknown Source',
           publishedAt: art.publishedAt || '',
         }));
-        console.log('Mapped draftArticles:', initialDrafts);
         setDraftArticles(initialDrafts);
       }
     } catch (err) {
@@ -55,17 +53,10 @@ export default function App() {
       setLoading(false);
     }
   }, []);
-  
-
 
   useEffect(() => {
     fetchInitialArticles();
   }, [fetchInitialArticles]);
-
-  // Log draftArticles when updated
-  useEffect(() => {
-    console.log('draftArticles state updated:', draftArticles);
-  }, [draftArticles]);
 
   const addByUrl = useCallback(async () => {
     if (!newUrl.trim()) {
@@ -81,8 +72,16 @@ export default function App() {
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      console.log('Fetched article metadata:', json);
-      setDraftArticles((prev) => [...prev, { title: json.title, desc: json.desc, url: newUrl.trim() }]);
+      setDraftArticles((prev) => [
+        ...prev,
+        {
+          title: json.title,
+          desc: json.desc,
+          url: newUrl.trim(),
+          source: json.source || 'Unknown Source',
+          publishedAt: json.publishedAt || '',
+        },
+      ]);
       setNewUrl('');
     } catch (err) {
       console.error('Error fetching article metadata:', err);
@@ -95,81 +94,63 @@ export default function App() {
   const generateSummaries = useCallback(async () => {
     setLoading(true);
     try {
+      const selectedArticles = draftArticles.filter((_, i) => selected[i]);
       const withSummaries = await Promise.all(
-        draftArticles.map(async (art) => {
+        selectedArticles.map(async (art) => {
           const sumRes = await fetch('/api/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: art.desc }),
           });
           const { summary } = await sumRes.json();
-          return { title: art.title, url: art.url, summary };
+          return { ...art, summary };
         })
       );
-      console.log('Generated summaries:', withSummaries);
       setArticles(withSummaries);
-      setSelected(withSummaries.map(() => true));
       setReviewMode(false);
     } catch (err) {
       console.error('Error generating summaries:', err);
     } finally {
       setLoading(false);
     }
-  }, [draftArticles]);
+  }, [draftArticles, selected]);
 
-  // Log articles state when updated
-  useEffect(() => {
-    console.log('articles state updated:', articles);
-  }, [articles]);
-
-  const sendToTelegram = useCallback(async () => {
-    const selectedArticles = articles.filter((_, i) => selected[i]);
-    if (selectedArticles.length === 0) {
-      alert('⚠️ Please select at least one article to send.');
-      return;
-    }
-    try {
-      const res = await fetch('/api/sendTelegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articles: selectedArticles }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        alert('✅ Sent to Telegram!');
-      } else {
-        throw new Error(json.error || 'Unknown error');
+  const sendSingleToTelegram = useCallback(
+    async (article) => {
+      try {
+        const res = await fetch('/api/sendTelegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ articles: [article] }),
+        });
+        const json = await res.json();
+        if (json.ok) {
+          setSentArticles((prev) => [...prev, article]);
+          setArticles((prev) => prev.filter((a) => a.url !== article.url));
+        } else {
+          throw new Error(json.error || 'Unknown error');
+        }
+      } catch (err) {
+        console.error('Error sending to Telegram:', err);
+        alert('❌ Failed to send to Telegram: ' + err.message);
       }
-    } catch (err) {
-      console.error('Error sending to Telegram:', err);
-      alert('❌ Failed to send to Telegram: ' + err.message);
-    }
-  }, [articles, selected]);
+    },
+    []
+  );
 
   const removeArticle = (idx) => {
-    console.log('Removing article at index:', idx);
     if (reviewMode) {
       const newDrafts = [...draftArticles];
       newDrafts.splice(idx, 1);
       setDraftArticles(newDrafts);
     } else {
       const newArticles = [...articles];
-      const newSelected = [...selected];
       newArticles.splice(idx, 1);
-      newSelected.splice(idx, 1);
       setArticles(newArticles);
-      setSelected(newSelected);
     }
   };
 
-  const toggleSelectAll = () => {
-    const allSelected = selected.every(Boolean);
-    setSelected(articles.map(() => !allSelected));
-  };
-
   const list = reviewMode ? draftArticles : articles;
-
-  console.log('Rendering list:', list);
 
   return (
     <div className="app-container">
@@ -185,8 +166,6 @@ export default function App() {
               {reviewMode && (
                 <input
                   type="checkbox"
-                  id={`select-article-${idx}`}
-                  className="select-checkbox"
                   checked={selected[idx] || false}
                   onChange={(e) => {
                     const updated = [...selected];
@@ -197,43 +176,39 @@ export default function App() {
                 />
               )}
             </div>
-            {!reviewMode && isEditingDescIndex === idx ? (
-              <>
-                <textarea
-                  className="url-input"
-                  value={editedDesc}
-                  onChange={(e) => setEditedDesc(e.target.value)}
-                />
-                <button
-                  className="btn green"
-                  onClick={() => {
-                    const updated = [...articles];
-                    updated[idx].summary = editedDesc;
-                    setArticles(updated);
-                    setIsEditingDescIndex(null);
-                  }}
-                >
-                  💾 Save
-                </button>
-              </>
-            ) : (
-              <p className="article-desc">
-                {reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}
-              </p>
-            )}
-            {!reviewMode && isEditingDescIndex !== idx && (
+            <p className="article-meta">
+              {art.source} • {new Date(art.publishedAt).toLocaleDateString()} • {new Date(art.publishedAt).toLocaleTimeString()}
+            </p>
+            <p className="article-desc">
+              {reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}
+            </p>
+            {!reviewMode && (
               <button
-                className="btn blue"
-                onClick={() => {
-                  setEditedDesc(articles[idx].summary);
-                  setIsEditingDescIndex(idx);
-                }}
+                className="btn green"
+                onClick={() => sendSingleToTelegram(art)}
               >
-                ✏️ Edit
+                📤 Send to Telegram
               </button>
             )}
           </motion.div>
         ))}
+
+        {sentArticles.length > 0 && (
+          <div className="sent-section">
+            <h2>✅ Already Sent</h2>
+            {sentArticles.map((art, idx) => (
+              <div key={idx} className="article-card sent">
+                <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
+                  {art.title}
+                </a>
+                <p className="article-meta">
+                  {art.source} • {new Date(art.publishedAt).toLocaleDateString()} • {new Date(art.publishedAt).toLocaleTimeString()}
+                </p>
+                <p className="article-desc">{art.summary}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {reviewMode ? (
@@ -254,14 +229,8 @@ export default function App() {
         </div>
       ) : (
         <div className="footer">
-          <button onClick={toggleSelectAll} className="btn gray">
-            🟢 Toggle Select All
-          </button>
           <button onClick={() => setReviewMode(true)} className="btn gray">
             🔙 Back
-          </button>
-          <button onClick={sendToTelegram} className="btn purple">
-            📤 Send to Telegram
           </button>
         </div>
       )}
