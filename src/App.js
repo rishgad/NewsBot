@@ -12,6 +12,7 @@ export default function App() {
   const [isEditingDescIndex, setIsEditingDescIndex] = useState(null);
   const [editedDesc, setEditedDesc] = useState('');
   const [sentArticles, setSentArticles] = useState([]);
+  const [filterText, setFilterText] = useState(''); // <-- Added filterText state
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
@@ -152,15 +153,39 @@ export default function App() {
 
   const list = reviewMode ? draftArticles : articles;
 
+  // Filter the list by title or source
+  const filteredList = list.filter(
+    (art) =>
+      art.title.toLowerCase().includes(filterText.toLowerCase()) ||
+      art.source.toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
+      {/* Filter input */}
+      <div className="filter-bar">
+        <input
+          type="text"
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          placeholder="🔍 Filter by title or source"
+          className="url-input"
+          style={{ marginBottom: '1rem', width: '100%' }}
+        />
+      </div>
+
       <div className="article-grid">
-        {list.map((art, idx) => (
+        {filteredList.map((art, idx) => (
           <motion.div key={idx} layout className="article-card">
             <div className="article-header">
-              <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
+              <a
+                href={art.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="article-title-link"
+              >
                 {art.title}
               </a>
               {reviewMode && (
@@ -177,7 +202,9 @@ export default function App() {
               )}
             </div>
             <p className="article-meta">
-              {art.source} • {new Date(art.publishedAt).toLocaleDateString()} • {new Date(art.publishedAt).toLocaleTimeString()}
+              {art.source} •{' '}
+              {new Date(art.publishedAt).toLocaleDateString()} •{' '}
+              {new Date(art.publishedAt).toLocaleTimeString()}
             </p>
             <p className="article-desc">
               {reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}
@@ -198,11 +225,18 @@ export default function App() {
             <h2>✅ Already Sent</h2>
             {sentArticles.map((art, idx) => (
               <div key={idx} className="article-card sent">
-                <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
+                <a
+                  href={art.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="article-title-link"
+                >
                   {art.title}
                 </a>
                 <p className="article-meta">
-                  {art.source} • {new Date(art.publishedAt).toLocaleDateString()} • {new Date(art.publishedAt).toLocaleTimeString()}
+                  {art.source} •{' '}
+                  {new Date(art.publishedAt).toLocaleDateString()} •{' '}
+                  {new Date(art.publishedAt).toLocaleTimeString()}
                 </p>
                 <p className="article-desc">{art.summary}</p>
               </div>
