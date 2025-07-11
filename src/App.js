@@ -36,13 +36,22 @@ export default function App() {
         console.error('API response does not contain a valid articles array!');
         setDraftArticles([]);
       } else {
-        const initialDrafts = news.articles.map((art) => ({
-          title: art.title,
-          desc: art.description || art.content || art.title || '',
-          url: art.url,
-          source: art.source?.name || art.source || 'Unknown Source',
-          publishedAt: art.publishedAt || '',
-        }));
+        const initialDrafts = news.articles.map((art) => {
+          // Check for incomplete data to show warning
+          const incompleteData =
+            !art.publishedAt ||
+            isNaN(new Date(art.publishedAt).getTime()) ||
+            !art.source;
+
+          return {
+            title: art.title,
+            desc: art.description || art.content || art.title || '',
+            url: art.url,
+            source: art.source || 'Unknown Source',
+            publishedAt: art.publishedAt || '',
+            incompleteData,
+          };
+        });
         setDraftArticles(initialDrafts);
       }
     } catch (err) {
@@ -70,6 +79,12 @@ export default function App() {
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
+
+      const incompleteData =
+        !json.publishedAt ||
+        isNaN(new Date(json.publishedAt).getTime()) ||
+        !json.source;
+
       setDraftArticles((prev) => [
         ...prev,
         {
@@ -78,6 +93,7 @@ export default function App() {
           url: newUrl.trim(),
           source: json.source || 'Unknown Source',
           publishedAt: json.publishedAt || '',
+          incompleteData,
         },
       ]);
       setNewUrl('');
@@ -93,11 +109,6 @@ export default function App() {
     setLoading(true);
     try {
       const selectedArticles = draftArticles.filter((_, i) => selected[i]);
-      if (selectedArticles.length === 0) {
-        alert('Please select at least one article to summarize.');
-        setLoading(false);
-        return;
-      }
       const withSummaries = await Promise.all(
         selectedArticles.map(async (art) => {
           const sumRes = await fetch('/api/summarize', {
@@ -106,7 +117,13 @@ export default function App() {
             body: JSON.stringify({ text: art.desc }),
           });
           const { summary } = await sumRes.json();
-          return { ...art, summary };
+
+          const incompleteData =
+            !art.publishedAt ||
+            isNaN(new Date(art.publishedAt).getTime()) ||
+            !art.source;
+
+          return { ...art, summary, incompleteData };
         })
       );
       setArticles(withSummaries);
@@ -128,7 +145,6 @@ export default function App() {
         });
         const json = await res.json();
         if (json.ok) {
-          setSentArticles((prev) => [...prev, article]);
           setArticles((prev) => prev.filter((a) => a.url !== article.url));
         } else {
           throw new Error(json.error || 'Unknown error');
@@ -142,11 +158,6 @@ export default function App() {
   );
 
   const sendAllToTelegram = useCallback(async () => {
-    if (articles.length === 0) {
-      alert('No summarized articles to send.');
-      return;
-    }
-    setLoading(true);
     try {
       const res = await fetch('/api/sendTelegram', {
         method: 'POST',
@@ -155,17 +166,13 @@ export default function App() {
       });
       const json = await res.json();
       if (json.ok) {
-        setSentArticles((prev) => [...prev, ...articles]);
         setArticles([]);
-        alert('✅ All articles sent to Telegram!');
       } else {
         throw new Error(json.error || 'Unknown error');
       }
     } catch (err) {
       console.error('Error sending all to Telegram:', err);
       alert('❌ Failed to send all to Telegram: ' + err.message);
-    } finally {
-      setLoading(false);
     }
   }, [articles]);
 
@@ -174,11 +181,6 @@ export default function App() {
       const newDrafts = [...draftArticles];
       newDrafts.splice(idx, 1);
       setDraftArticles(newDrafts);
-
-      // Also remove from selected if necessary
-      const newSelected = [...selected];
-      newSelected.splice(idx, 1);
-      setSelected(newSelected);
     } else {
       const newArticles = [...articles];
       newArticles.splice(idx, 1);
@@ -186,12 +188,9 @@ export default function App() {
     }
   };
 
-  // Toggle select all checkbox
   const toggleSelectAll = () => {
-    if (!draftArticles.length) return;
-    const allSelected = selected.length === draftArticles.length && selected.every(Boolean);
-    if (allSelected) {
-      setSelected(new Array(draftArticles.length).fill(false));
+    if (selected.length === draftArticles.length) {
+      setSelected([]);
     } else {
       setSelected(new Array(draftArticles.length).fill(true));
     }
@@ -203,83 +202,76 @@ export default function App() {
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
-      {reviewMode && draftArticles.length > 0 && (
-        <div style={{ marginBottom: 10 }}>
-          <label style={{ cursor: 'pointer', userSelect: 'none' }}>
-            <input
-              type="checkbox"
-              checked={selected.length === draftArticles.length && selected.every(Boolean)}
-              onChange={toggleSelectAll}
-            />{' '}
-            Select All
-          </label>
-        </div>
-      )}
-
       <div className="article-grid">
-        {list.map((art, idx) => (
-          <motion.div key={idx} layout className="article-card">
-            <div className="article-header">
-              <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
-                {art.title}
-              </a>
-              {reviewMode && (
-                <input
-                  type="checkbox"
-                  checked={selected[idx] || false}
-                  onChange={(e) => {
-                    const updated = [...selected];
-                    updated[idx] = e.target.checked;
-                    setSelected(updated);
-                  }}
-                  title="Select article"
-                />
-              )}
-            </div>
-            <p className="article-meta">
-              {art.source} •{' '}
-              {(() => {
-                const d = new Date(art.publishedAt);
-                return !art.publishedAt || isNaN(d) ? '' : d.toLocaleDateString();
-              })()}{' '}
-              •{' '}
-              {(() => {
-                const d = new Date(art.publishedAt);
-                return !art.publishedAt || isNaN(d) ? '' : d.toLocaleTimeString();
-              })()}
-            </p>
-            <p className="article-desc">
-              {reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}
-            </p>
-            {!reviewMode && (
-              <button className="btn green" onClick={() => sendSingleToTelegram(art)}>
-                📤 Send to Telegram
-              </button>
-            )}
-          </motion.div>
-        ))}
+        {list.map((art, idx) => {
+          const publishedDate = art.publishedAt
+            ? new Date(art.publishedAt)
+            : null;
+          const isDateValid = publishedDate && !isNaN(publishedDate.getTime());
 
-        {!reviewMode && sentArticles.length > 0 && (
-          <div className="sent-section">
-            <h2>✅ Already Sent</h2>
-            {sentArticles.map((art, idx) => (
-              <div key={idx} className="article-card sent">
-                <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
+          return (
+            <motion.div key={idx} layout className="article-card">
+              <div className="article-header">
+                <a
+                  href={art.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="article-title-link"
+                >
                   {art.title}
                 </a>
-                <p className="article-meta">
-                  {art.source} • {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : ''} •{' '}
-                  {art.publishedAt ? new Date(art.publishedAt).toLocaleTimeString() : ''}
-                </p>
-                <p className="article-desc">{art.summary}</p>
+                {reviewMode && (
+                  <input
+                    type="checkbox"
+                    checked={selected[idx] || false}
+                    onChange={(e) => {
+                      const updated = [...selected];
+                      updated[idx] = e.target.checked;
+                      setSelected(updated);
+                    }}
+                    title="Select article"
+                  />
+                )}
               </div>
-            ))}
-          </div>
-        )}
+              <p className="article-meta">
+                {art.source || "Unknown Source"} •{' '}
+                {isDateValid
+                  ? publishedDate.toLocaleDateString() +
+                    ' ' +
+                    publishedDate.toLocaleTimeString()
+                  : 'Date Unknown'}
+                {art.incompleteData && (
+                  <span
+                    style={{ color: 'orange', marginLeft: 10 }}
+                    title="Some article info missing or invalid"
+                  >
+                    ⚠️
+                  </span>
+                )}
+              </p>
+              <p className="article-desc">
+                {reviewMode
+                  ? art.desc.slice(0, 150) + '...'
+                  : art.summary || art.desc}
+              </p>
+              {!reviewMode && (
+                <button
+                  className="btn green"
+                  onClick={() => sendSingleToTelegram(art)}
+                >
+                  📤 Send to Telegram
+                </button>
+              )}
+            </motion.div>
+          );
+        })}
       </div>
 
       {reviewMode ? (
         <div className="bottom-area">
+          <button className="btn gray" onClick={toggleSelectAll}>
+            {selected.length === draftArticles.length ? 'Deselect All' : 'Select All'}
+          </button>
           <input
             type="text"
             value={newUrl}
@@ -287,25 +279,34 @@ export default function App() {
             className="url-input"
             placeholder="Paste article URL here"
           />
-          <button onClick={addByUrl} className="btn green" disabled={loading}>
+          <button onClick={addByUrl} className="btn green">
             ➕ Add Article
           </button>
           <button onClick={generateSummaries} className="btn blue" disabled={loading}>
             {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
           </button>
-          {!reviewMode && !loading && articles.length > 0 && (
-            <button onClick={sendAllToTelegram} className="btn orange" style={{ marginLeft: 10 }}>
+        </div>
+      ) : (
+        <div className="bottom-area">
+          {loading && articles.length > 0 && (
+            <button
+              onClick={sendAllToTelegram}
+              className="btn orange"
+              style={{ marginLeft: 10 }}
+            >
               📤 Send All to Telegram
             </button>
           )}
         </div>
-      ) : (
-        <div className="footer">
-          <button onClick={() => setReviewMode(true)} className="btn gray">
-            🔙 Back
-          </button>
-        </div>
       )}
+
+      <button
+        className="btn toggle-mode"
+        onClick={() => setReviewMode(!reviewMode)}
+        style={{ marginTop: 20 }}
+      >
+        {reviewMode ? 'Exit Review Mode' : 'Enter Review Mode'}
+      </button>
     </div>
   );
 }
