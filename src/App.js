@@ -237,10 +237,20 @@ export default function App() {
               )}
             </div>
             <p className="article-meta">
-              {art.source} • {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : ''}{' '}
-              • {art.publishedAt ? new Date(art.publishedAt).toLocaleTimeString() : ''}
+              {art.source} •{' '}
+              {(() => {
+                const d = new Date(art.publishedAt);
+                return !art.publishedAt || isNaN(d) ? '' : d.toLocaleDateString();
+              })()}{' '}
+              •{' '}
+              {(() => {
+                const d = new Date(art.publishedAt);
+                return !art.publishedAt || isNaN(d) ? '' : d.toLocaleTimeString();
+              })()}
             </p>
-            <p className="article-desc">{reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}</p>
+            <p className="article-desc">
+              {reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}
+            </p>
             {!reviewMode && (
               <button className="btn green" onClick={() => sendSingleToTelegram(art)}>
                 📤 Send to Telegram
