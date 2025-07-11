@@ -9,10 +9,7 @@ export default function App() {
   const [newUrl, setNewUrl] = useState('');
   const [articles, setArticles] = useState([]);
   const [selected, setSelected] = useState([]);
-  const [isEditingDescIndex, setIsEditingDescIndex] = useState(null);
-  const [editedDesc, setEditedDesc] = useState('');
   const [sentArticles, setSentArticles] = useState([]);
-  const [filterText, setFilterText] = useState(''); // <-- Added filterText state
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
@@ -96,6 +93,11 @@ export default function App() {
     setLoading(true);
     try {
       const selectedArticles = draftArticles.filter((_, i) => selected[i]);
+      if (selectedArticles.length === 0) {
+        alert('Please select at least one article to summarize.');
+        setLoading(false);
+        return;
+      }
       const withSummaries = await Promise.all(
         selectedArticles.map(async (art) => {
           const sumRes = await fetch('/api/summarize', {
@@ -139,11 +141,44 @@ export default function App() {
     []
   );
 
+  const sendAllToTelegram = useCallback(async () => {
+    if (articles.length === 0) {
+      alert('No summarized articles to send.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/sendTelegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articles }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setSentArticles((prev) => [...prev, ...articles]);
+        setArticles([]);
+        alert('✅ All articles sent to Telegram!');
+      } else {
+        throw new Error(json.error || 'Unknown error');
+      }
+    } catch (err) {
+      console.error('Error sending all to Telegram:', err);
+      alert('❌ Failed to send all to Telegram: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [articles]);
+
   const removeArticle = (idx) => {
     if (reviewMode) {
       const newDrafts = [...draftArticles];
       newDrafts.splice(idx, 1);
       setDraftArticles(newDrafts);
+
+      // Also remove from selected if necessary
+      const newSelected = [...selected];
+      newSelected.splice(idx, 1);
+      setSelected(newSelected);
     } else {
       const newArticles = [...articles];
       newArticles.splice(idx, 1);
@@ -151,41 +186,41 @@ export default function App() {
     }
   };
 
-  const list = reviewMode ? draftArticles : articles;
+  // Toggle select all checkbox
+  const toggleSelectAll = () => {
+    if (!draftArticles.length) return;
+    const allSelected = selected.length === draftArticles.length && selected.every(Boolean);
+    if (allSelected) {
+      setSelected(new Array(draftArticles.length).fill(false));
+    } else {
+      setSelected(new Array(draftArticles.length).fill(true));
+    }
+  };
 
-  // Filter the list by title or source
-  const filteredList = list.filter(
-    (art) =>
-      art.title.toLowerCase().includes(filterText.toLowerCase()) ||
-      art.source.toLowerCase().includes(filterText.toLowerCase())
-  );
+  const list = reviewMode ? draftArticles : articles;
 
   return (
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
-      {/* Filter input */}
-      <div className="filter-bar">
-        <input
-          type="text"
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-          placeholder="🔍 Filter by title or source"
-          className="url-input"
-          style={{ marginBottom: '1rem', width: '100%' }}
-        />
-      </div>
+      {reviewMode && draftArticles.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <label style={{ cursor: 'pointer', userSelect: 'none' }}>
+            <input
+              type="checkbox"
+              checked={selected.length === draftArticles.length && selected.every(Boolean)}
+              onChange={toggleSelectAll}
+            />{' '}
+            Select All
+          </label>
+        </div>
+      )}
 
       <div className="article-grid">
-        {filteredList.map((art, idx) => (
+        {list.map((art, idx) => (
           <motion.div key={idx} layout className="article-card">
             <div className="article-header">
-              <a
-                href={art.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="article-title-link"
-              >
+              <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
                 {art.title}
               </a>
               {reviewMode && (
@@ -202,41 +237,29 @@ export default function App() {
               )}
             </div>
             <p className="article-meta">
-              {art.source} •{' '}
-              {new Date(art.publishedAt).toLocaleDateString()} •{' '}
-              {new Date(art.publishedAt).toLocaleTimeString()}
+              {art.source} • {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : ''}{' '}
+              • {art.publishedAt ? new Date(art.publishedAt).toLocaleTimeString() : ''}
             </p>
-            <p className="article-desc">
-              {reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}
-            </p>
+            <p className="article-desc">{reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}</p>
             {!reviewMode && (
-              <button
-                className="btn green"
-                onClick={() => sendSingleToTelegram(art)}
-              >
+              <button className="btn green" onClick={() => sendSingleToTelegram(art)}>
                 📤 Send to Telegram
               </button>
             )}
           </motion.div>
         ))}
 
-        {sentArticles.length > 0 && (
+        {!reviewMode && sentArticles.length > 0 && (
           <div className="sent-section">
             <h2>✅ Already Sent</h2>
             {sentArticles.map((art, idx) => (
               <div key={idx} className="article-card sent">
-                <a
-                  href={art.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="article-title-link"
-                >
+                <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
                   {art.title}
                 </a>
                 <p className="article-meta">
-                  {art.source} •{' '}
-                  {new Date(art.publishedAt).toLocaleDateString()} •{' '}
-                  {new Date(art.publishedAt).toLocaleTimeString()}
+                  {art.source} • {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : ''} •{' '}
+                  {art.publishedAt ? new Date(art.publishedAt).toLocaleTimeString() : ''}
                 </p>
                 <p className="article-desc">{art.summary}</p>
               </div>
@@ -254,12 +277,17 @@ export default function App() {
             className="url-input"
             placeholder="Paste article URL here"
           />
-          <button onClick={addByUrl} className="btn green">
+          <button onClick={addByUrl} className="btn green" disabled={loading}>
             ➕ Add Article
           </button>
           <button onClick={generateSummaries} className="btn blue" disabled={loading}>
             {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
           </button>
+          {!loading && articles.length > 0 && (
+            <button onClick={sendAllToTelegram} className="btn orange" style={{ marginLeft: 10 }}>
+              📤 Send All to Telegram
+            </button>
+          )}
         </div>
       ) : (
         <div className="footer">
