@@ -230,7 +230,7 @@ export default function App() {
             </p>
             <p className="article-desc">{reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}</p>
             {!reviewMode && (
-              <>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                 <button className="btn green" onClick={() => sendSingleToTelegram(art)}>
                   📤 Send to Telegram
                 </button>
@@ -246,13 +246,11 @@ export default function App() {
                       setArticles(updatedArticles);
                     }
                   }}
-                  style={{ marginLeft: 8 }}
                 >
                   ✏️ Edit Summary
                 </button>
-              </>
+              </div>
             )}
-
           </motion.div>
         ))}
 
