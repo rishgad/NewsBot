@@ -203,19 +203,6 @@ export default function App() {
     <div className="app-container">
       <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
 
-      {reviewMode && draftArticles.length > 0 && (
-        <div style={{ marginBottom: 10 }}>
-          <label style={{ cursor: 'pointer', userSelect: 'none' }}>
-            <input
-              type="checkbox"
-              checked={selected.length === draftArticles.length && selected.every(Boolean)}
-              onChange={toggleSelectAll}
-            />{' '}
-            Select All
-          </label>
-        </div>
-      )}
-
       <div className="article-grid">
         {list.map((art, idx) => (
           <motion.div key={idx} layout className="article-card">
@@ -224,16 +211,18 @@ export default function App() {
                 {art.title}
               </a>
               {reviewMode && (
-                <input
-                  type="checkbox"
-                  checked={selected[idx] || false}
-                  onChange={(e) => {
-                    const updated = [...selected];
-                    updated[idx] = e.target.checked;
-                    setSelected(updated);
-                  }}
-                  title="Select article"
-                />
+                <button
+                onClick={() => {
+                  const updated = [...selected];
+                  updated[idx] = !updated[idx];
+                  setSelected(updated);
+                }}
+                title="Select article"
+                className={`btn small ${selected[idx] ? 'selected' : ''}`}
+              >
+                {selected[idx] ? '✓ Selected' : 'Select'}
+              </button>
+              
               )}
             </div>
             <p className="article-meta">
@@ -268,20 +257,30 @@ export default function App() {
       </div>
 
       {reviewMode ? (
-        <div className="bottom-area">
-          <input
-            type="text"
-            value={newUrl}
-            onChange={(e) => setNewUrl(e.target.value)}
-            className="url-input"
-            placeholder="Paste article URL here"
-          />
-          <button onClick={addByUrl} className="btn green" disabled={loading}>
-            ➕ Add Article
-          </button>
-          <button onClick={generateSummaries} className="btn blue" disabled={loading}>
-            {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
-          </button>
+        <div className="bottom-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <input
+              type="text"
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              className="url-input"
+              placeholder="Paste article URL here"
+            />
+            <button onClick={addByUrl} className="btn green" disabled={loading}>
+              ➕ Add Article
+            </button>
+            <button onClick={generateSummaries} className="btn blue" disabled={loading}>
+              {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
+            </button>
+          </div>
+
+          {reviewMode && draftArticles.length > 0 && (
+            <label style={{ cursor: 'pointer', userSelect: 'none' }}>
+              <button onClick={toggleSelectAll} className="btn gray">
+                {selected.length === draftArticles.length && selected.every(Boolean) ? 'Deselect All' : 'Select All'}
+              </button>
+            </label>
+          )}
         </div>
       ) : (
         <div className="footer">
