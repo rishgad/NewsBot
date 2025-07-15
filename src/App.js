@@ -237,8 +237,7 @@ export default function App() {
               )}
             </div>
             <p className="article-meta">
-              {art.source} • {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : ''}{' '}
-              • {art.publishedAt ? new Date(art.publishedAt).toLocaleTimeString() : ''}
+              {art.source} • {art.publishedAt ? art.publishedAt : ''}{' '}
             </p>
             <p className="article-desc">{reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}</p>
             {!reviewMode && (
@@ -258,7 +257,7 @@ export default function App() {
                   {art.title}
                 </a>
                 <p className="article-meta">
-                  {art.source} • {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : ''} •{' '}
+                  {art.source} • {art.publishedAt ? art.publishedAt : ''} •{' '}
                   {art.publishedAt ? new Date(art.publishedAt).toLocaleTimeString() : ''}
                 </p>
                 <p className="article-desc">{art.summary}</p>
