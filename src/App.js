@@ -212,17 +212,17 @@ export default function App() {
               </a>
               {reviewMode && (
                 <button
-                onClick={() => {
-                  const updated = [...selected];
-                  updated[idx] = !updated[idx];
-                  setSelected(updated);
-                }}
-                title="Select article"
-                className={`btn small ${selected[idx] ? 'selected' : ''}`}
-              >
-                {selected[idx] ? '✓ Selected' : 'Select'}
-              </button>
-              
+                  onClick={() => {
+                    const updated = [...selected];
+                    updated[idx] = !updated[idx];
+                    setSelected(updated);
+                  }}
+                  title="Select article"
+                  className={`btn small ${selected[idx] ? 'selected' : ''}`}
+                >
+                  {selected[idx] ? '✓ Selected' : 'Select'}
+                </button>
+
               )}
             </div>
             <p className="article-meta">
@@ -230,10 +230,29 @@ export default function App() {
             </p>
             <p className="article-desc">{reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}</p>
             {!reviewMode && (
-              <button className="btn green" onClick={() => sendSingleToTelegram(art)}>
-                📤 Send to Telegram
-              </button>
+              <>
+                <button className="btn green" onClick={() => sendSingleToTelegram(art)}>
+                  📤 Send to Telegram
+                </button>
+
+                <button
+                  className="btn blue"
+                  onClick={() => {
+                    const edited = prompt('Edit summary:', art.summary);
+                    if (edited !== null) {
+                      const updatedArticles = articles.map((a) =>
+                        a.url === art.url ? { ...a, summary: edited } : a
+                      );
+                      setArticles(updatedArticles);
+                    }
+                  }}
+                  style={{ marginLeft: 8 }}
+                >
+                  ✏️ Edit Summary
+                </button>
+              </>
             )}
+
           </motion.div>
         ))}
 
