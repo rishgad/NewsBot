@@ -201,7 +201,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <h1 className="app-title">🧠 Decentralized AI News Bot</h1>
+      <h1 className="app-title">Decentralized AI News Bot</h1>
 
       <div className="article-grid">
         {list.map((art, idx) => (
@@ -232,7 +232,7 @@ export default function App() {
             {!reviewMode && (
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                 <button className="btn green" onClick={() => sendSingleToTelegram(art)}>
-                  📤 Send to Telegram
+                  Send to Telegram
                 </button>
 
                 <button
@@ -247,7 +247,7 @@ export default function App() {
                     }
                   }}
                 >
-                  ✏️ Edit Summary
+                  Edit Summary
                 </button>
               </div>
             )}
@@ -256,7 +256,7 @@ export default function App() {
 
         {!reviewMode && sentArticles.length > 0 && (
           <div className="sent-section">
-            <h2>✅ Already Sent</h2>
+            <h2>Already Sent</h2>
             {sentArticles.map((art, idx) => (
               <div key={idx} className="article-card sent">
                 <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
@@ -284,7 +284,7 @@ export default function App() {
               placeholder="Paste article URL here"
             />
             <button onClick={addByUrl} className="btn green" disabled={loading}>
-              ➕ Add Article
+              Add Article
             </button>
             <button onClick={generateSummaries} className="btn blue" disabled={loading}>
               {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
@@ -305,7 +305,7 @@ export default function App() {
             🔙 Back
           </button>
           <button onClick={sendAllToTelegram} className="btn orange" style={{ marginLeft: 10 }}>
-            📤 Send All to Telegram
+            Send All to Telegram
           </button>
         </div>
       )}
