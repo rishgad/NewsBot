@@ -282,7 +282,7 @@ export default function App() {
           <button onClick={generateSummaries} className="btn blue" disabled={loading}>
             {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
           </button>
-          {!reviewMode && !loading && articles.length > 0 && (
+          {reviewMode && !loading && articles.length > 0 && (
             <button onClick={sendAllToTelegram} className="btn orange" style={{ marginLeft: 10 }}>
               📤 Send All to Telegram
             </button>
