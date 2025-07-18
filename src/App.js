@@ -350,7 +350,7 @@ export default function App() {
               Add Article
             </button>
             <button onClick={generateSummaries} className="btn blue" disabled={loading}>
-              {loading ? '⏳ Summarizing...' : '⚡ Generate Summaries'}
+              {loading ? '⏳ Summarizing...' : 'Generate Summaries'}
             </button>
           </div>
 
@@ -365,7 +365,7 @@ export default function App() {
       ) : (
         <div className="footer">
           <button onClick={() => setReviewMode(true)} className="btn gray">
-            🔙 Back
+            Back
           </button>
           <button onClick={sendAllToTelegram} className="btn orange" style={{ marginLeft: 10 }}>
             Send All to Telegram
