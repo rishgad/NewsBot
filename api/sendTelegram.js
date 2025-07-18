@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   
     try {
       const message = articles
-        .map((a, i) => `${i + 1}. [${a.title}](${a.url})\n_${a.summary}_\n`)
+        .map((a, i) => `[${a.title}](${a.url})\n_${a.summary}_\n`)
         .join('\n');
   
       const response = await fetch(
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: CHAT_ID,
-            text: `*Today's Decentralized-AI News*\n\n${message}`,
+            text: `${message}`,
             parse_mode: 'Markdown',
           }),
         }

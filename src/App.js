@@ -9,7 +9,19 @@ export default function App() {
   const [newUrl, setNewUrl] = useState('');
   const [articles, setArticles] = useState([]);
   const [selected, setSelected] = useState([]);
-  const [sentArticles, setSentArticles] = useState([]);
+  const [sentArticles, setSentArticles] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sentArticles');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+  const [editingIdx, setEditingIdx] = useState(null);
+  const [editedSummary, setEditedSummary] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('sentArticles', JSON.stringify(sentArticles));
+  }, [sentArticles]);
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
@@ -146,6 +158,7 @@ export default function App() {
       alert('No summarized articles to send.');
       return;
     }
+    if (!window.confirm('Are you sure you want to send all articles to Telegram?')) return;
     setLoading(true);
     try {
       const res = await fetch('/api/sendTelegram', {
@@ -175,7 +188,6 @@ export default function App() {
       newDrafts.splice(idx, 1);
       setDraftArticles(newDrafts);
 
-      // Also remove from selected if necessary
       const newSelected = [...selected];
       newSelected.splice(idx, 1);
       setSelected(newSelected);
@@ -186,7 +198,12 @@ export default function App() {
     }
   };
 
-  // Toggle select all checkbox
+  const removeSentArticle = (idx) => {
+    const updated = [...sentArticles];
+    updated.splice(idx, 1);
+    setSentArticles(updated);
+  };
+
   const toggleSelectAll = () => {
     if (!draftArticles.length) return;
     const allSelected = selected.length === draftArticles.length && selected.every(Boolean);
@@ -222,33 +239,76 @@ export default function App() {
                 >
                   {selected[idx] ? '✓ Selected' : 'Select'}
                 </button>
-
               )}
             </div>
             <p className="article-meta">
               {art.source} • {art.publishedAt ? art.publishedAt : ''}{' '}
             </p>
-            <p className="article-desc">{reviewMode ? art.desc.slice(0, 150) + '...' : art.summary}</p>
+            <p className="article-desc">
+              {reviewMode ? art.desc.slice(0, 150) + '...' : editingIdx === idx ? (
+                <textarea
+                  className="summary-editor"
+                  value={editedSummary}
+                  onChange={(e) => setEditedSummary(e.target.value)}
+                  style={{ width: '100%', minHeight: '60px' }}
+                />
+              ) : (
+                art.summary
+              )}
+            </p>
             {!reviewMode && (
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                <button className="btn green" onClick={() => sendSingleToTelegram(art)}>
-                  Send to Telegram
-                </button>
-
-                <button
-                  className="btn blue"
-                  onClick={() => {
-                    const edited = prompt('Edit summary:', art.summary);
-                    if (edited !== null) {
-                      const updatedArticles = articles.map((a) =>
-                        a.url === art.url ? { ...a, summary: edited } : a
-                      );
-                      setArticles(updatedArticles);
-                    }
-                  }}
-                >
-                  Edit Summary
-                </button>
+                {editingIdx === idx ? (
+                  <>
+                    <button
+                      className="btn green"
+                      onClick={() => {
+                        const updatedArticles = articles.map((a, i) =>
+                          i === idx ? { ...a, summary: editedSummary } : a
+                        );
+                        setArticles(updatedArticles);
+                        setEditingIdx(null);
+                        setEditedSummary('');
+                      }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="btn gray"
+                      onClick={() => {
+                        setEditingIdx(null);
+                        setEditedSummary('');
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="btn green"
+                      onClick={() => {
+                        if (window.confirm('Send this article to Telegram?')) {
+                          sendSingleToTelegram(art);
+                        }
+                      }}
+                    >
+                      Send to Telegram
+                    </button>
+                    <button
+                      className="btn blue"
+                      onClick={() => {
+                        setEditingIdx(idx);
+                        setEditedSummary(art.summary);
+                      }}
+                    >
+                      Edit Summary
+                    </button>
+                    <button className="btn gray" onClick={() => removeArticle(idx)}>
+                      Remove
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </motion.div>
@@ -267,6 +327,9 @@ export default function App() {
                   {art.publishedAt ? new Date(art.publishedAt).toLocaleTimeString() : ''}
                 </p>
                 <p className="article-desc">{art.summary}</p>
+                <button className="btn gray" onClick={() => removeSentArticle(idx)}>
+                  Remove
+                </button>
               </div>
             ))}
           </div>
