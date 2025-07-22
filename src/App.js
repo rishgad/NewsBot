@@ -105,35 +105,44 @@ export default function App() {
   const generateSummaries = useCallback(async () => {
     setLoading(true);
     try {
-      const alreadySummarized = articles.map((a) => a.url);
-      const selectedArticles = draftArticles
-        .filter((_, i) => selected[i])
-        .filter((art) => !alreadySummarized.includes(art.url));
+      const selectedArticles = draftArticles.filter((_, i) => selected[i]);
       if (selectedArticles.length === 0) {
         alert('Please select at least one article to summarize.');
         setLoading(false);
         return;
       }
-      const withSummaries = await Promise.all(
+  
+      const newlySummarized = await Promise.all(
         selectedArticles.map(async (art) => {
-          if (art.summary) return art; // already summarized or edited
+          // If already summarized, just return it
+          if (art.summary) return art;
+  
           const sumRes = await fetch('/api/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: art.desc }),
           });
+  
           const { summary } = await sumRes.json();
           return { ...art, summary };
         })
       );
-      setArticles(withSummaries);
+  
+      // Always update full selected set (to show all), preserving edits
+      const updatedArticles = selectedArticles.map((art) => {
+        const existing = articles.find((a) => a.url === art.url);
+        return existing || newlySummarized.find((a) => a.url === art.url) || art;
+      });
+  
+      setArticles(updatedArticles);
       setReviewMode(false);
     } catch (err) {
       console.error('Error generating summaries:', err);
     } finally {
       setLoading(false);
     }
-  }, [draftArticles, selected]);
+  }, [draftArticles, selected, articles]);
+  
 
   const sendSingleToTelegram = useCallback(
     async (article) => {
