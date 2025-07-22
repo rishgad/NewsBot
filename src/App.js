@@ -105,7 +105,10 @@ export default function App() {
   const generateSummaries = useCallback(async () => {
     setLoading(true);
     try {
-      const selectedArticles = draftArticles.filter((_, i) => selected[i]);
+      const alreadySummarized = articles.map((a) => a.url);
+      const selectedArticles = draftArticles
+        .filter((_, i) => selected[i])
+        .filter((art) => !alreadySummarized.includes(art.url));
       if (selectedArticles.length === 0) {
         alert('Please select at least one article to summarize.');
         setLoading(false);
@@ -113,6 +116,7 @@ export default function App() {
       }
       const withSummaries = await Promise.all(
         selectedArticles.map(async (art) => {
+          if (art.summary) return art; // already summarized or edited
           const sumRes = await fetch('/api/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -375,7 +379,20 @@ export default function App() {
         </div>
       ) : (
         <div className="footer">
-          <button onClick={() => setReviewMode(true)} className="btn gray">
+          <button
+            onClick={() => {
+              // Store summaries and edits before going back
+              const updatedDrafts = draftArticles.map((draft) => {
+                const match = articles.find((a) => a.url === draft.url);
+                return match
+                  ? { ...draft, summary: match.summary, title: match.title }
+                  : draft;
+              });
+              setDraftArticles(updatedDrafts);
+              setReviewMode(true);
+            }}
+            className="btn gray"
+          >
             Back
           </button>
           <button onClick={sendAllToTelegram} className="btn orange" style={{ marginLeft: 10 }}>
