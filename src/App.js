@@ -7,6 +7,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [reviewMode, setReviewMode] = useState(true);
   const [newUrl, setNewUrl] = useState('');
+  const [editedTitle, setEditedTitle] = useState('');
   const [articles, setArticles] = useState([]);
   const [selected, setSelected] = useState([]);
   const [sentArticles, setSentArticles] = useState(() => {
@@ -224,9 +225,18 @@ export default function App() {
         {list.map((art, idx) => (
           <motion.div key={idx} layout className="article-card">
             <div className="article-header">
-              <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
-                {art.title}
-              </a>
+              {editingIdx === idx ? (
+                <input
+                  className="title-editor"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  style={{ width: '100%', fontWeight: 'bold', fontSize: '16px' }}
+                />
+              ) : (
+                <a href={art.url} target="_blank" rel="noopener noreferrer" className="article-title-link">
+                  {art.title}
+                </a>
+              )}
               {reviewMode && (
                 <button
                   onClick={() => {
@@ -264,7 +274,7 @@ export default function App() {
                       className="btn green"
                       onClick={() => {
                         const updatedArticles = articles.map((a, i) =>
-                          i === idx ? { ...a, summary: editedSummary } : a
+                          i === idx ? { ...a, summary: editedSummary, title: editedTitle } : a
                         );
                         setArticles(updatedArticles);
                         setEditingIdx(null);
@@ -300,6 +310,7 @@ export default function App() {
                       onClick={() => {
                         setEditingIdx(idx);
                         setEditedSummary(art.summary);
+                        setEditedTitle(art.title);
                       }}
                     >
                       Edit Summary
