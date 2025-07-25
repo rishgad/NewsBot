@@ -111,29 +111,29 @@ export default function App() {
         setLoading(false);
         return;
       }
-  
+
       const newlySummarized = await Promise.all(
         selectedArticles.map(async (art) => {
           // If already summarized, just return it
           if (art.summary) return art;
-  
+
           const sumRes = await fetch('/api/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: art.desc }),
           });
-  
+
           const { summary } = await sumRes.json();
           return { ...art, summary };
         })
       );
-  
+
       // Always update full selected set (to show all), preserving edits
       const updatedArticles = selectedArticles.map((art) => {
         const existing = articles.find((a) => a.url === art.url);
         return existing || newlySummarized.find((a) => a.url === art.url) || art;
       });
-  
+
       setArticles(updatedArticles);
       setReviewMode(false);
     } catch (err) {
@@ -142,7 +142,7 @@ export default function App() {
       setLoading(false);
     }
   }, [draftArticles, selected, articles]);
-  
+
 
   const sendSingleToTelegram = useCallback(
     async (article) => {
@@ -379,11 +379,17 @@ export default function App() {
           </div>
 
           {reviewMode && draftArticles.length > 0 && (
-            <label style={{ cursor: 'pointer', userSelect: 'none' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button onClick={toggleSelectAll} className="btn gray">
-                {selected.length === draftArticles.length && selected.every(Boolean) ? 'Deselect All' : 'Select All'}
+                Select All
               </button>
-            </label>
+              <button
+                onClick={() => setSelected(new Array(draftArticles.length).fill(false))}
+                className="btn gray"
+              >
+                Unselect All
+              </button>
+            </div>
           )}
         </div>
       ) : (
