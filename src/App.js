@@ -376,6 +376,9 @@ export default function App() {
             <button onClick={generateSummaries} className="btn blue" disabled={loading}>
               {loading ? '⏳ Summarizing...' : 'Generate Summaries'}
             </button>
+            <button onClick={fetchInitialArticles} className="btn gray" disabled={loading}>
+              🔄 Refresh
+            </button>
           </div>
 
           {reviewMode && draftArticles.length > 0 && (
