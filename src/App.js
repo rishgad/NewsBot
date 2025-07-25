@@ -233,7 +233,11 @@ export default function App() {
   return (
     <div className="app-container">
       <h1 className="app-title">Decentralized AI News Bot</h1>
-
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+        <button onClick={fetchInitialArticles} className="btn gray" disabled={loading}>
+          Refresh
+        </button>
+      </div>
       <div className="article-grid">
         {list.map((art, idx) => (
           <motion.div key={idx} layout className="article-card">
@@ -375,9 +379,6 @@ export default function App() {
             </button>
             <button onClick={generateSummaries} className="btn blue" disabled={loading}>
               {loading ? '⏳ Summarizing...' : 'Generate Summaries'}
-            </button>
-            <button onClick={fetchInitialArticles} className="btn gray" disabled={loading}>
-              🔄 Refresh
             </button>
           </div>
 
