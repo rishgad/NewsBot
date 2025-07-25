@@ -232,7 +232,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <h1 className="app-title">Decentralized AI News Bot</h1>
+      <h1 className="app-title">Distrobot - Decentralized AI News</h1>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
         <button onClick={fetchInitialArticles} className="btn gray" disabled={loading}>
           Refresh
