@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   
     try {
       const response = await fetch(
-        'https://api-inference.huggingface.co/models/facebook/bart-cnn',
+        'https://api-inference.huggingface.co/models/facebook/bart-large-cnn',
         {
           method: 'POST',
           headers: {
