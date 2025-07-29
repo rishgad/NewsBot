@@ -54,7 +54,7 @@ export default function App() {
       setArticles(filtered);
     }
   }, []);
-
+  
   useEffect(() => {
     localStorage.setItem('sentArticles', JSON.stringify(sentArticles));
   }, [sentArticles]);
@@ -64,7 +64,7 @@ export default function App() {
   }, [draftArticles]);
 
   useEffect(() => {
-    localStorage.setItem('articles', JSON.stringify(filtered));
+    localStorage.setItem('articles', JSON.stringify(articles));
   }, [articles]);
 
   useEffect(() => {
