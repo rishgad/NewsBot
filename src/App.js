@@ -14,23 +14,29 @@ export default function App() {
   const [reviewMode, setReviewMode] = useState(true);
   const [newUrl, setNewUrl] = useState('');
   const [editedTitle, setEditedTitle] = useState('');
-  const [articles, setArticles] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('articles');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
-  const [selected, setSelected] = useState(() => {
-    const saved = localStorage.getItem('selectedSet');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
-  });
   const [sentArticles, setSentArticles] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sentArticles');
       return saved ? JSON.parse(saved) : [];
     }
     return [];
+  });
+  
+  const [articles, setArticles] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedArticles = localStorage.getItem('articles');
+      const savedSent = localStorage.getItem('sentArticles');
+      const sent = savedSent ? JSON.parse(savedSent) : [];
+      if (!savedArticles) return [];
+      const parsedArticles = JSON.parse(savedArticles);
+      const sentUrls = new Set(sent.map((a) => a.url));
+      return parsedArticles.filter((a) => !sentUrls.has(a.url));
+    }
+    return [];
+  });
+  const [selected, setSelected] = useState(() => {
+    const saved = localStorage.getItem('selectedSet');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
   });
   const [editingIdx, setEditingIdx] = useState(null);
   const [editedSummary, setEditedSummary] = useState('');
