@@ -21,7 +21,10 @@ export default function App() {
     }
     return [];
   });
-  
+  const [selected, setSelected] = useState(() => {
+    const saved = localStorage.getItem('selectedSet');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const [articles, setArticles] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedArticles = localStorage.getItem('articles');
@@ -33,10 +36,6 @@ export default function App() {
       return parsedArticles.filter((a) => !sentUrls.has(a.url));
     }
     return [];
-  });
-  const [selected, setSelected] = useState(() => {
-    const saved = localStorage.getItem('selectedSet');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
   });
   const [editingIdx, setEditingIdx] = useState(null);
   const [editedSummary, setEditedSummary] = useState('');
