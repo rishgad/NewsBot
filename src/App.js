@@ -154,7 +154,7 @@ export default function App() {
         });
         const json = await res.json();
         if (json.ok) {
-          setSentArticles((prev) => [...prev, article]);
+          setSentArticles((prev) => [article, ...prev]);
           setArticles((prev) => prev.filter((a) => a.url !== article.url));
         } else {
           throw new Error(json.error || 'Unknown error');
