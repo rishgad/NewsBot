@@ -196,7 +196,7 @@ export default function App() {
 
   // Update selection with URLs:
   const toggleSelect = (url) => {
-    setSelectedSet((prev) => {
+    setSelected((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(url)) newSet.delete(url);
       else newSet.add(url);
