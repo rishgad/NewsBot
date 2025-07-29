@@ -21,8 +21,8 @@ export default function App() {
   const [editedSummary, setEditedSummary] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('sentArticles', JSON.stringify(sentArticles));
-  }, [sentArticles]);
+    localStorage.setItem('sentArticles', [sentArticles], JSON.stringify(sentArticles));
+  });
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);

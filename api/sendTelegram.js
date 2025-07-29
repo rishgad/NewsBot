@@ -2,7 +2,7 @@ export default async function handler(req, res) {
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
     const { articles } = req.body;
-  
+
     try {
       const message = articles
         .map((a, i) => `[${a.title}](${a.url})\n_${a.summary}_\n`)
