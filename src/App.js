@@ -22,11 +22,8 @@ export default function App() {
     return [];
   });
   const [selected, setSelected] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('selected');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
+    const saved = localStorage.getItem('selectedSet');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
   });
   const [sentArticles, setSentArticles] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -196,6 +193,16 @@ export default function App() {
     },
     []
   );
+
+  // Update selection with URLs:
+  const toggleSelect = (url) => {
+    setSelectedSet((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(url)) newSet.delete(url);
+      else newSet.add(url);
+      return newSet;
+    });
+  };
 
   const sendAllToTelegram = useCallback(async () => {
     if (articles.length === 0) {
