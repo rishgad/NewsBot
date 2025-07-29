@@ -21,10 +21,7 @@ export default function App() {
     }
     return [];
   });
-  const [selected, setSelected] = useState(() => {
-    const saved = localStorage.getItem('selectedSet');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
-  });
+  
   const [articles, setArticles] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedArticles = localStorage.getItem('articles');
@@ -37,8 +34,26 @@ export default function App() {
     }
     return [];
   });
+  const [selected, setSelected] = useState(() => {
+    const saved = localStorage.getItem('selectedSet');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const [editingIdx, setEditingIdx] = useState(null);
   const [editedSummary, setEditedSummary] = useState('');
+
+  useEffect(() => {
+    const savedArticles = localStorage.getItem('articles');
+    const savedSent = localStorage.getItem('sentArticles');
+  
+    if (savedArticles && savedSent) {
+      const articles = JSON.parse(savedArticles);
+      const sent = JSON.parse(savedSent);
+      const sentUrls = new Set(sent.map((a) => a.url));
+  
+      const filtered = articles.filter((a) => !sentUrls.has(a.url));
+      setArticles(filtered);
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('sentArticles', JSON.stringify(sentArticles));
@@ -49,7 +64,7 @@ export default function App() {
   }, [draftArticles]);
 
   useEffect(() => {
-    localStorage.setItem('articles', JSON.stringify(articles));
+    localStorage.setItem('articles', JSON.stringify(filtered));
   }, [articles]);
 
   useEffect(() => {
