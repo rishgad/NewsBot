@@ -3,13 +3,31 @@ import { motion } from 'framer-motion';
 import './App.css';
 
 export default function App() {
-  const [draftArticles, setDraftArticles] = useState([]);
+  const [draftArticles, setDraftArticles] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('draftArticles');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(true);
   const [reviewMode, setReviewMode] = useState(true);
   const [newUrl, setNewUrl] = useState('');
   const [editedTitle, setEditedTitle] = useState('');
-  const [articles, setArticles] = useState([]);
-  const [selected, setSelected] = useState([]);
+  const [articles, setArticles] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('articles');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+  const [selected, setSelected] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('selected');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [sentArticles, setSentArticles] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sentArticles');
@@ -21,8 +39,20 @@ export default function App() {
   const [editedSummary, setEditedSummary] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('sentArticles', [sentArticles], JSON.stringify(sentArticles));
-  });
+    localStorage.setItem('sentArticles', JSON.stringify(sentArticles));
+  }, [sentArticles]);
+
+  useEffect(() => {
+    localStorage.setItem('draftArticles', JSON.stringify(draftArticles));
+  }, [draftArticles]);
+
+  useEffect(() => {
+    localStorage.setItem('articles', JSON.stringify(articles));
+  }, [articles]);
+
+  useEffect(() => {
+    localStorage.setItem('selected', JSON.stringify(selected));
+  }, [selected]);
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
@@ -351,8 +381,7 @@ export default function App() {
                   {art.title}
                 </a>
                 <p className="article-meta">
-                  {art.source} • {art.publishedAt ? art.publishedAt : ''} •{' '}
-                  {art.publishedAt ? new Date(art.publishedAt).toLocaleTimeString() : ''}
+                  {art.source} • {art.publishedAt ? art.publishedAt : ''}
                 </p>
                 <p className="article-desc">{art.summary}</p>
                 <button className="btn gray" onClick={() => removeSentArticle(idx)}>
