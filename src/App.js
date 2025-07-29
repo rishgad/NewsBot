@@ -56,10 +56,6 @@ export default function App() {
   }, []);
   
   useEffect(() => {
-    fetchInitialArticles();
-  }, [fetchInitialArticles]);
-  
-  useEffect(() => {
     localStorage.setItem('sentArticles', JSON.stringify(sentArticles));
   }, [sentArticles]);
 
