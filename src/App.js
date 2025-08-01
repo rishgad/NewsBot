@@ -35,7 +35,7 @@ export default function App() {
     return [];
   });
   const [selected, setSelected] = useState(() => {
-    const saved = localStorage.getItem('selectedSet');
+    const saved = localStorage.getItem('selected');
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
   const [editingIdx, setEditingIdx] = useState(null);
