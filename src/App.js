@@ -21,7 +21,7 @@ export default function App() {
     }
     return [];
   });
-  
+
   const [articles, setArticles] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedArticles = localStorage.getItem('articles');
@@ -53,17 +53,17 @@ export default function App() {
   useEffect(() => {
     const savedArticles = localStorage.getItem('articles');
     const savedSent = localStorage.getItem('sentArticles');
-  
+
     if (savedArticles && savedSent) {
       const articles = JSON.parse(savedArticles);
       const sent = JSON.parse(savedSent);
       const sentUrls = new Set(sent.map((a) => a.url));
-  
+
       const filtered = articles.filter((a) => !sentUrls.has(a.url));
       setArticles(filtered);
     }
   }, []);
-  
+
   useEffect(() => {
     localStorage.setItem('sentArticles', JSON.stringify(sentArticles));
   }, [sentArticles]);
@@ -79,19 +79,19 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('selected', JSON.stringify(Array.from(selected)));
   }, [selected]);
-  
+
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/news');
+
+      const rawText = await response.text();  // read body once
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API response error:', response.status, errorText);
+        console.error('API response error:', response.status, rawText);
         throw new Error('API request failed with status ' + response.status);
       }
-
-      const rawText = await response.text();
 
       let news;
       try {
@@ -101,6 +101,7 @@ export default function App() {
         console.log('Raw response text:', rawText);
         throw parseError;
       }
+
 
       if (!news.articles || !Array.isArray(news.articles)) {
         console.error('API response does not contain a valid articles array!');
