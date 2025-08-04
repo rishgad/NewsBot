@@ -35,8 +35,17 @@ export default function App() {
     return [];
   });
   const [selected, setSelected] = useState(() => {
-    //const saved = localStorage.getItem('selected');
-    //return saved ? new Set(JSON.parse(saved)) : new Set();
+    const saved = localStorage.getItem('selected');
+    try {
+      const parsed = saved ? JSON.parse(saved) : [];
+      if (Array.isArray(parsed)) {
+        return new Set(parsed);
+      }
+      // fallback if parsed is not an array
+      return new Set();
+    } catch {
+      return new Set();
+    }
   });
   const [editingIdx, setEditingIdx] = useState(null);
   const [editedSummary, setEditedSummary] = useState('');
