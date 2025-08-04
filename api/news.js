@@ -13,15 +13,15 @@ export default async function handler(req, res) {
     return new Promise((resolve, reject) => {
       getJson(
         {
-          //engine: "google_news",
-          tbm: "nws",
+          engine: "google_news",
+          q: query,
           hl: "en",
           gl: "us",
-          q: query,
           tbs: "qdr:d",
           api_key: serpApiKey,
         },
         (json) => {
+          console.log('SerpAPI response:', json);
           if (!json || json.error) {
             reject(json?.error || "Failed to fetch SerpAPI results");
           } else {
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
           }
         }
       );
-    });
+    });      
   };
 
   try {
