@@ -68,8 +68,9 @@ export default function App() {
   }, [articles]);
 
   useEffect(() => {
-    localStorage.setItem('selected', JSON.stringify(selected));
+    localStorage.setItem('selected', JSON.stringify(Array.from(selected)));
   }, [selected]);
+  
 
   const fetchInitialArticles = useCallback(async () => {
     setLoading(true);
